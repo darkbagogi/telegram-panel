@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: telegram-panel
+    env: python
+    buildCommand: |
+      pip install -r web_panel/requirements.txt
+      pip install -r requirements.txt
+    startCommand: gunicorn --chdir web_panel --bind 0.0.0.0:$PORT app:app --timeout 120 --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: TELEGRAM_API_ID
+        sync: false
+      - key: TELEGRAM_API_HASH
+        sync: false
+      - key: TELEGRAM_PHONE
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: telegram-panel-db
+          property: connectionString
+
+databases:
+  - name: telegram-panel-db
+    databaseName: telegram_panel
+    user: telegram_user

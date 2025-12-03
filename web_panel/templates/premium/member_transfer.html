@@ -1,0 +1,294 @@
+{% extends "premium/base.html" %}
+
+{% block title %}Üye Transferi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Üye Transfer Sistemi</h1>
+
+    <!-- Ayarlar Kartı -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-gear-wide-connected me-2"></i>Transfer Ayarları</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="sourceGroup" class="form-label">Kaynak Grup</label>
+                    <select class="form-select" id="sourceGroup"><option value="">Yükleniyor...</option></select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="targetGroup" class="form-label">Hedef Grup</label>
+                    <select class="form-select" id="targetGroup"><option value="">Yükleniyor...</option></select>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-primary" onclick="loadGroupMembers()">
+                    <i class="bi bi-arrow-down-circle-fill me-1"></i> Üyeleri Yükle
+                </button>
+                <button class="btn btn-success" onclick="startTransfer()">
+                    <i class="bi bi-send-check-fill me-1"></i> Transferi Başlat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yükleniyor Spinner -->
+    <div class="text-center my-4" id="loadingSpinner" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yükleniyor...</span>
+        </div>
+        <p class="mt-2">Üyeler yükleniyor, lütfen bekleyin...</p>
+    </div>
+
+    <!-- Üye Seçim Kartı -->
+    <div class="card shadow mb-4" id="memberSelectionCard" style="display: none;">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-people-fill me-2"></i>Üye Seçimi (<span id="totalMembers">0</span>)</h6>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted"><span id="selectedCount">0</span> üye seçildi</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-info" onclick="selectAllMembers()">Tümünü Seç</button>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="deselectAllMembers()">Seçimi Temizle</button>
+                </div>
+            </div>
+            <div class="list-group" id="memberList" style="max-height: 500px; overflow-y: auto;">
+                <!-- Üyeler buraya dinamik olarak eklenecek -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Bildirimleri için Konteyner -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto" id="toastTitle">Bildirim</strong>
+      <button type-="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastBody">
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedMembers = new Set();
+    let allMembers = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserGroups();
+    });
+
+    function showToast(title, message, type = 'info') {
+        const toastElement = document.getElementById('notificationToast');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastBody = document.getElementById('toastBody');
+        
+        toastTitle.textContent = title;
+        toastBody.textContent = message;
+
+        // Reset classes
+        toastElement.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+        toastTitle.classList.remove('text-white');
+        toastBody.classList.remove('text-white');
+
+        // Add new classes based on type
+        if (type === 'success') {
+            toastElement.classList.add('bg-success', 'text-white');
+        } else if (type === 'danger') {
+            toastElement.classList.add('bg-danger', 'text-white');
+        } else if (type === 'warning') {
+            toastElement.classList.add('bg-warning', 'text-dark');
+        } else {
+            toastElement.classList.add('bg-info', 'text-white');
+        }
+
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+    async function loadUserGroups() {
+        try {
+            const response = await fetch('/api/telegram/groups', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const sourceSelect = document.getElementById('sourceGroup');
+                const targetSelect = document.getElementById('targetGroup');
+                sourceSelect.innerHTML = '<option value="" selected>Kaynak Grup Seçin...</option>';
+                targetSelect.innerHTML = '<option value="" selected>Hedef Grup Seçin...</option>';
+                data.groups.forEach(group => {
+                    const option = `<option value="${group.id}">${group.title}</option>`;
+                    sourceSelect.insertAdjacentHTML('beforeend', option);
+                    targetSelect.insertAdjacentHTML('beforeend', option);
+                });
+            } else {
+                showToast('Hata', 'Gruplar yüklenemedi: ' + data.error, 'danger');
+            }
+        } catch (error) {
+            console.error('Grup yükleme hatası:', error);
+            showToast('Kritik Hata', 'Gruplar yüklenirken bir sunucu hatası oluştu.', 'danger');
+        }
+    }
+
+    async function loadGroupMembers() {
+        const sourceGroupId = document.getElementById('sourceGroup').value;
+        if (!sourceGroupId) {
+            showToast('Uyarı', 'Lütfen bir kaynak grup seçin.', 'warning');
+            return;
+        }
+
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const memberSelectionCard = document.getElementById('memberSelectionCard');
+        const memberList = document.getElementById('memberList');
+
+        loadingSpinner.style.display = 'block';
+        memberSelectionCard.style.display = 'none';
+        memberList.innerHTML = '';
+        selectedMembers.clear();
+        allMembers = [];
+        document.getElementById('selectedCount').textContent = '0';
+
+        try {
+            // 1. Backend'den üyeleri çekmesini iste (JSON dosyası oluştur/güncelle)
+            const extractResponse = await fetch('/api/telegram/extract_members', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                },
+                body: JSON.stringify({ group_id: sourceGroupId, limit: 2500 })
+            });
+            const extractData = await extractResponse.json();
+
+            if (!extractData.success && extractData.error && !extractData.error.includes("already exists")) {
+                throw new Error(extractData.error || 'Üyeler backend tarafında çekilemedi.');
+            }
+            showToast('Bilgi', extractData.message || 'Üyeler arka planda çekiliyor/doğrulanıyor.', 'info');
+
+            // 2. Çekilen üyelerin listesini al
+            const response = await fetch(`/api/telegram/group_members/${sourceGroupId}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                allMembers = data.members;
+                document.getElementById('totalMembers').textContent = allMembers.length;
+                memberList.innerHTML = allMembers.length === 0 ? '<div class="list-group-item">Bu grupta hiç üye bulunamadı.</div>' : '';
+                
+                allMembers.forEach(member => {
+                    const memberItem = `
+                        <label class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="d-block">${member.first_name || ''} ${member.last_name || ''}</strong>
+                                <small class="text-muted">@${member.username || 'N/A'}</small>
+                            </div>
+                            <input class="form-check-input" type="checkbox" value="${member.id}" onchange="toggleMemberSelection(this, ${member.id})">
+                        </label>`;
+                    memberList.insertAdjacentHTML('beforeend', memberItem);
+                });
+                memberSelectionCard.style.display = 'block';
+                showToast('Başarılı', `${allMembers.length} üye başarıyla yüklendi.`, 'success');
+            } else {
+                showToast('Hata', `Üyeler yüklenemedi: ${data.error}`, 'danger');
+            }
+        } catch (error) {
+            console.error('Üye yükleme sırasında bir hata oluştu:', error);
+            showToast('Kritik Hata', 'Üye yükleme sırasında bir hata oluştu: ' + error.message, 'danger');
+        } finally {
+            loadingSpinner.style.display = 'none';
+        }
+    }
+
+    function toggleMemberSelection(checkbox, memberId) {
+        if (checkbox.checked) {
+            selectedMembers.add(memberId);
+        } else {
+            selectedMembers.delete(memberId);
+        }
+        document.getElementById('selectedCount').textContent = selectedMembers.size;
+    }
+
+    function selectAllMembers() {
+        document.querySelectorAll('#memberList .form-check-input').forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+                selectedMembers.add(parseInt(checkbox.value));
+            }
+        });
+        document.getElementById('selectedCount').textContent = selectedMembers.size;
+    }
+
+    function deselectAllMembers() {
+        document.querySelectorAll('#memberList .form-check-input').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        selectedMembers.clear();
+        document.getElementById('selectedCount').textContent = '0';
+    }
+
+    async function startTransfer() {
+        const sourceGroupId = document.getElementById('sourceGroup').value;
+        const targetGroupId = document.getElementById('targetGroup').value;
+
+        if (!sourceGroupId || !targetGroupId) {
+            showToast('Uyarı', 'Lütfen hem kaynak hem de hedef grup seçin.', 'warning');
+            return;
+        }
+
+        if (sourceGroupId === targetGroupId) {
+            showToast('Uyarı', 'Kaynak ve hedef grup aynı olamaz.', 'warning');
+            return;
+        }
+
+        if (selectedMembers.size === 0) {
+            showToast('Uyarı', 'Lütfen transfer edilecek en az bir üye seçin.', 'warning');
+            return;
+        }
+
+        const memberIds = Array.from(selectedMembers);
+
+        showToast('Bilgi', `${memberIds.length} üyenin transferi başlatılıyor...`, 'info');
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        try {
+            const response = await fetch('/api/telegram/transfer_members', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                },
+                body: JSON.stringify({ 
+                    source_group_id: sourceGroupId, 
+                    target_group_id: targetGroupId, 
+                    member_ids: memberIds 
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Başarılı', data.message || 'Transfer işlemi başarıyla tamamlandı.', 'success');
+                // İsteğe bağlı olarak seçimleri temizle
+                deselectAllMembers();
+            } else {
+                showToast('Hata', data.error || 'Transfer sırasında bir hata oluştu.', 'danger');
+            }
+        } catch (error) {
+            console.error('Transfer hatası:', error);
+            showToast('Kritik Hata', 'Transfer işlemi sırasında bir sunucu hatası oluştu.', 'danger');
+        } finally {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+    }
+
+</script>
+{% endblock %}

@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+
+{% block title %}Gelişmiş Analitik{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Gelişmiş Analitik
+                    </h3>
+                    <div class="card-tools">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setTimeRange('7d')">7 Gün</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setTimeRange('30d')">30 Gün</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary active" onclick="setTimeRange('90d')">90 Gün</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Özet Kartları -->
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3 id="totalInvites">0</h3>
+                                    <p>Toplam Davet</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-paper-plane"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3 id="successfulInvites">0</h3>
+                                    <p>Başarılı Davet</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3 id="successRate">0%</h3>
+                                    <p>Başarı Oranı</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3 id="activeCampaigns">0</h3>
+                                    <p>Aktif Kampanya</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-rocket"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grafikler -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-chart-area mr-2"></i>
+                                        Davet Performansı
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="performanceChart" height="100"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-chart-pie mr-2"></i>
+                                        Başarı Dağılımı
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="successChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kampanya Performansı -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-table mr-2"></i>
+                                        Kampanya Performansı
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped" id="campaignTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Kampanya</th>
+                                                    <th>Durum</th>
+                                                    <th>Toplam Davet</th>
+                                                    <th>Başarılı</th>
+                                                    <th>Başarı Oranı</th>
+                                                    <th>Son Aktivite</th>
+                                                    <th>İşlemler</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted">
+                                                        Veri yükleniyor...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hata Analizi -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        Hata Analizi
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="errorChart" height="150"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        Saatlik Aktivite
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="hourlyChart" height="150"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rapor İndirme -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-download mr-2"></i>
+                                        Rapor İndirme
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Rapor Türü</label>
+                                                <select class="form-control" id="reportType">
+                                                    <option value="summary">Özet Rapor</option>
+                                                    <option value="detailed">Detaylı Rapor</option>
+                                                    <option value="campaign">Kampanya Raporu</option>
+                                                    <option value="error">Hata Raporu</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Format</label>
+                                                <select class="form-control" id="reportFormat">
+                                                    <option value="pdf">PDF</option>
+                                                    <option value="excel">Excel</option>
+                                                    <option value="csv">CSV</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="downloadReport()">
+                                        <i class="fas fa-download mr-2"></i>
+                                        Rapor İndir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let currentTimeRange = '90d';
+let performanceChart, successChart, errorChart, hourlyChart;
+
+// Sayfa yüklendiğinde
+$(document).ready(function() {
+    initializeCharts();
+    loadAnalyticsData();
+});
+
+function setTimeRange(range) {
+    currentTimeRange = range;
+    $('.btn-group .btn').removeClass('active');
+    $(`button[onclick="setTimeRange('${range}')"]`).addClass('active');
+    loadAnalyticsData();
+}
+
+function initializeCharts() {
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Başarılı Davetler',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'Toplam Davetler',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Success Chart
+    const successCtx = document.getElementById('successChart').getContext('2d');
+    successChart = new Chart(successCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Başarılı', 'Başarısız'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#28a745', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Error Chart
+    const errorCtx = document.getElementById('errorChart').getContext('2d');
+    errorChart = new Chart(errorCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Flood Wait', 'Privacy', 'User Not Found', 'Other'],
+            datasets: [{
+                label: 'Hata Sayısı',
+                data: [0, 0, 0, 0],
+                backgroundColor: ['#ffc107', '#dc3545', '#6c757d', '#17a2b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Hourly Chart
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    hourlyChart = new Chart(hourlyCtx, {
+        type: 'bar',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => i + ':00'),
+            datasets: [{
+                label: 'Davet Sayısı',
+                data: new Array(24).fill(0),
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function loadAnalyticsData() {
+    $.get('/api/analytics', { range: currentTimeRange })
+        .done(function(data) {
+            updateSummaryCards(data.summary);
+            updateCharts(data);
+            updateCampaignTable(data.campaigns);
+        })
+        .fail(function() {
+            // API başarısız olursa örnek veriler göster
+            const mockData = generateMockAnalyticsData();
+            updateSummaryCards(mockData.summary);
+            updateCharts(mockData);
+            updateCampaignTable(mockData.campaigns);
+            console.warn('Analitik verileri yüklenirken hata oluştu, örnek veriler gösteriliyor.');
+        });
+}
+
+function generateMockAnalyticsData() {
+    const days = currentTimeRange === '7d' ? 7 : currentTimeRange === '30d' ? 30 : 90;
+    const dailyStats = [];
+    
+    // Son X gün için günlük istatistikler oluştur
+    for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const totalInvites = Math.floor(Math.random() * 100) + 20;
+        const successfulInvites = Math.floor(totalInvites * (0.6 + Math.random() * 0.3));
+        
+        dailyStats.push({
+            date: dateStr,
+            total: totalInvites,
+            successful: successfulInvites,
+            failed: totalInvites - successfulInvites
+        });
+    }
+    
+    // Toplam istatistikleri hesapla
+    const totalInvites = dailyStats.reduce((sum, day) => sum + day.total, 0);
+    const successfulInvites = dailyStats.reduce((sum, day) => sum + day.successful, 0);
+    const successRate = totalInvites > 0 ? Math.round((successfulInvites / totalInvites) * 100) : 0;
+    
+    // Saatlik istatistikler (0-23 saat)
+    const hourlyStats = Array.from({length: 24}, () => Math.floor(Math.random() * 50));
+    
+    // Hata istatistikleri
+    const errorStats = {
+        flood_wait: Math.floor(Math.random() * 20) + 5,
+        privacy: Math.floor(Math.random() * 15) + 3,
+        user_not_found: Math.floor(Math.random() * 10) + 2,
+        other: Math.floor(Math.random() * 8) + 1
+    };
+    
+    // Örnek kampanyalar
+    const campaigns = [
+        {
+            name: "Teknoloji Grubu Kampanyası",
+            status: "running",
+            total_invites: 450,
+            successful_invites: 320,
+            success_rate: 71,
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            name: "Kripto Para Topluluğu",
+            status: "completed",
+            total_invites: 280,
+            successful_invites: 195,
+            success_rate: 70,
+            created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            name: "Freelancer Ağı",
+            status: "running",
+            total_invites: 180,
+            successful_invites: 125,
+            success_rate: 69,
+            created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+            name: "E-ticaret Girişimcileri",
+            status: "paused",
+            total_invites: 95,
+            successful_invites: 68,
+            success_rate: 72,
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+        }
+    ];
+    
+    return {
+        summary: {
+            total_invites: totalInvites,
+            successful_invites: successfulInvites,
+            success_rate: successRate,
+            active_campaigns: campaigns.filter(c => c.status === 'running').length
+        },
+        daily_stats: dailyStats,
+        hourly_stats: hourlyStats,
+        error_stats: errorStats,
+        campaigns: campaigns
+    };
+}
+
+function updateSummaryCards(summary) {
+    $('#totalInvites').text(summary.total_invites || 0);
+    $('#successfulInvites').text(summary.successful_invites || 0);
+    $('#successRate').text((summary.success_rate || 0) + '%');
+    $('#activeCampaigns').text(summary.active_campaigns || 0);
+}
+
+function updateCharts(data) {
+    // Performance chart güncelle
+    performanceChart.data.labels = data.daily_stats.map(d => d.date);
+    performanceChart.data.datasets[0].data = data.daily_stats.map(d => d.successful);
+    performanceChart.data.datasets[1].data = data.daily_stats.map(d => d.total);
+    performanceChart.update();
+
+    // Success chart güncelle
+    successChart.data.datasets[0].data = [
+        data.summary.successful_invites || 0,
+        (data.summary.total_invites || 0) - (data.summary.successful_invites || 0)
+    ];
+    successChart.update();
+
+    // Error chart güncelle
+    if (data.error_stats) {
+        errorChart.data.datasets[0].data = [
+            data.error_stats.flood_wait || 0,
+            data.error_stats.privacy || 0,
+            data.error_stats.user_not_found || 0,
+            data.error_stats.other || 0
+        ];
+        errorChart.update();
+    }
+
+    // Hourly chart güncelle
+    if (data.hourly_stats) {
+        hourlyChart.data.datasets[0].data = data.hourly_stats;
+        hourlyChart.update();
+    }
+}
+
+function updateCampaignTable(campaigns) {
+    const tbody = $('#campaignTable tbody');
+    tbody.empty();
+
+    if (campaigns && campaigns.length > 0) {
+        campaigns.forEach(campaign => {
+            const row = `
+                <tr>
+                    <td>${campaign.name}</td>
+                    <td><span class="badge badge-${getStatusColor(campaign.status)}">${campaign.status}</span></td>
+                    <td>${campaign.total_invites || 0}</td>
+                    <td>${campaign.successful_invites || 0}</td>
+                    <td>${campaign.success_rate || 0}%</td>
+                    <td>${formatDate(campaign.last_activity)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewCampaign(${campaign.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    } else {
+        tbody.append('<tr><td colspan="7" class="text-center text-muted">Kampanya bulunamadı</td></tr>');
+    }
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'running': 'success',
+        'completed': 'primary',
+        'paused': 'warning',
+        'failed': 'danger',
+        'pending': 'secondary'
+    };
+    return colors[status] || 'secondary';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('tr-TR');
+}
+
+function viewCampaign(campaignId) {
+    window.location.href = `/campaigns/${campaignId}`;
+}
+
+function downloadReport() {
+    const type = $('#reportType').val();
+    const format = $('#reportFormat').val();
+    
+    window.open(`/api/export-report?type=${type}&format=${format}&range=${currentTimeRange}`, '_blank');
+}
+</script>
+{% endblock %}

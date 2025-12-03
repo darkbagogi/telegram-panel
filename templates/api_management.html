@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+
+{% block title %}API Yönetimi - Telegram Premium Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-code me-2"></i>API Yönetimi</h2>
+                <button class="btn btn-primary" onclick="generateNewKey()">
+                    <i class="fas fa-plus me-1"></i>Yeni API Key
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Kullanım İstatistikleri -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-card-info">
+                <div class="stat-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ api_keys|length }}</h3>
+                    <p>Aktif API Key</p>
+                    <small class="text-info">Toplam oluşturulan</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ api_stats.today_calls }}</h3>
+                    <p>Bugünkü Çağrı</p>
+                    <small class="text-success">{{ api_stats.limit }} limitinden</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-card-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ api_stats.avg_response }}ms</h3>
+                    <p>Ortalama Yanıt</p>
+                    <small class="text-warning">Son 24 saat</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ api_stats.success_rate }}%</h3>
+                    <p>Başarı Oranı</p>
+                    <small class="text-muted">Son 7 gün</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Keys Listesi -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>API Anahtarları
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if api_keys %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Anahtar Adı</th>
+                                    <th>API Key</th>
+                                    <th>Oluşturma Tarihi</th>
+                                    <th>Son Kullanım</th>
+                                    <th>Kullanım</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for key in api_keys %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ key.name }}</strong>
+                                        {% if key.description %}
+                                        <br><small class="text-muted">{{ key.description }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <code class="api-key-display" data-key="{{ key.key }}">
+                                                {{ key.key[:8] }}...{{ key.key[-4:] }}
+                                            </code>
+                                            <button class="btn btn-sm btn-outline-secondary ms-2" 
+                                                    onclick="toggleKeyVisibility(this, '{{ key.key }}')"
+                                                    title="Anahtarı göster/gizle">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary ms-1" 
+                                                    onclick="copyToClipboard('{{ key.key }}')"
+                                                    title="Kopyala">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>{{ key.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                    <td>
+                                        {% if key.last_used %}
+                                            {{ key.last_used.strftime('%d.%m.%Y %H:%M') }}
+                                        {% else %}
+                                            <span class="text-muted">Hiç kullanılmadı</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" 
+                                                 data-usage="{{ key.usage_count }}"
+                                                 data-limit="{{ api_stats.limit }}">
+                                                {{ key.usage_count }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if key.is_active %}
+                                            <span class="badge bg-success">Aktif</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Pasif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" 
+                                                    onclick="viewKeyStats('{{ key.id }}')"
+                                                    title="İstatistikler">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" 
+                                                    onclick="editKey('{{ key.id }}')"
+                                                    title="Düzenle">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if key.is_active %}
+                                            <button class="btn btn-outline-secondary" 
+                                                    onclick="toggleKeyStatus('{{ key.id }}')"
+                                                    title="Devre dışı bırak">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                            {% else %}
+                                            <button class="btn btn-outline-success" 
+                                                    onclick="toggleKeyStatus('{{ key.id }}')"
+                                                    title="Etkinleştir">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-danger" 
+                                                    onclick="deleteKey('{{ key.id }}')"
+                                                    title="Sil">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Henüz API anahtarınız yok</h5>
+                        <p class="text-muted">API'yi kullanmaya başlamak için yeni bir anahtar oluşturun.</p>
+                        <button class="btn btn-primary" onclick="generateNewKey()">
+                            <i class="fas fa-plus me-1"></i>İlk API Key'inizi Oluşturun
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Dokümantasyonu -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>API Dokümantasyonu
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="apiDocsAccordion">
+                        <!-- Authentication -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#auth-docs">
+                                    <i class="fas fa-shield-alt me-2"></i>Kimlik Doğrulama
+                                </button>
+                            </h2>
+                            <div id="auth-docs" class="accordion-collapse collapse show" data-bs-parent="#apiDocsAccordion">
+                                <div class="accordion-body">
+                                    <p>API'yi kullanmak için her istekte API anahtarınızı header'da göndermeniz gerekir:</p>
+                                    <pre><code>Authorization: Bearer YOUR_API_KEY</code></pre>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        API anahtarınızı güvenli tutun ve asla public repository'lerde paylaşmayın.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Endpoints -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#endpoints-docs">
+                                    <i class="fas fa-plug me-2"></i>API Endpoints
+                                </button>
+                            </h2>
+                            <div id="endpoints-docs" class="accordion-collapse collapse" data-bs-parent="#apiDocsAccordion">
+                                <div class="accordion-body">
+                                    <h6>Mevcut Endpoints:</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Method</th>
+                                                    <th>Endpoint</th>
+                                                    <th>Açıklama</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><span class="badge bg-success">GET</span></td>
+                                                    <td><code>/api/campaigns</code></td>
+                                                    <td>Kampanyaları listele</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-primary">POST</span></td>
+                                                    <td><code>/api/campaigns</code></td>
+                                                    <td>Yeni kampanya oluştur</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-success">GET</span></td>
+                                                    <td><code>/api/campaigns/{id}</code></td>
+                                                    <td>Kampanya detayları</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-warning">PUT</span></td>
+                                                    <td><code>/api/campaigns/{id}</code></td>
+                                                    <td>Kampanya güncelle</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span class="badge bg-success">GET</span></td>
+                                                    <td><code>/api/analytics</code></td>
+                                                    <td>Analytics verileri</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rate Limits -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#limits-docs">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Rate Limits
+                                </button>
+                            </h2>
+                            <div id="limits-docs" class="accordion-collapse collapse" data-bs-parent="#apiDocsAccordion">
+                                <div class="accordion-body">
+                                    <p>API kullanım limitleri abonelik planınıza göre değişir:</p>
+                                    <ul>
+                                        <li><strong>Free:</strong> API erişimi yok</li>
+                                        <li><strong>Premium:</strong> 1,000 çağrı/gün</li>
+                                        <li><strong>Corporate:</strong> Sınırsız</li>
+                                    </ul>
+                                    <p>Rate limit aşıldığında <code>429 Too Many Requests</code> hatası alırsınız.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Test Aracı -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-flask me-2"></i>API Test Aracı
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="apiTestForm">
+                        <div class="mb-3">
+                            <label class="form-label">Method</label>
+                            <select class="form-select" name="method">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Endpoint</label>
+                            <input type="text" class="form-control" name="endpoint" placeholder="/api/campaigns" value="/api/campaigns">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">API Key</label>
+                            <select class="form-select" name="api_key">
+                                <option value="">Seçiniz...</option>
+                                {% for key in api_keys %}
+                                {% if key.is_active %}
+                                <option value="{{ key.key }}">{{ key.name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Body (JSON)</label>
+                            <textarea class="form-control" name="body" rows="4" placeholder='{"name": "Test Campaign"}'></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="testAPI()">
+                            <i class="fas fa-play me-1"></i>Test Et
+                        </button>
+                    </form>
+                    
+                    <div id="apiTestResult" class="mt-3" style="display: none;">
+                        <h6>Sonuç:</h6>
+                        <pre id="apiTestOutput" class="bg-light p-2 rounded"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New API Key Modal -->
+<div class="modal fade" id="newKeyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni API Key Oluştur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newKeyForm">
+                    <div class="mb-3">
+                        <label class="form-label">Anahtar Adı *</label>
+                        <input type="text" class="form-control" name="name" required placeholder="Örn: Mobil Uygulama">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="description" rows="2" placeholder="Bu anahtarın ne için kullanılacağını açıklayın"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">İzinler</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="permissions" value="campaigns" checked>
+                            <label class="form-check-label">Kampanya Yönetimi</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="permissions" value="analytics" checked>
+                            <label class="form-check-label">Analytics Erişimi</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="permissions" value="users">
+                            <label class="form-check-label">Kullanıcı Yönetimi</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="createAPIKey()">
+                    <i class="fas fa-plus me-1"></i>Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Stats Modal -->
+<div class="modal fade" id="keyStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">API Key İstatistikleri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="keyStatsContent">
+                    <!-- Dinamik içerik -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set progress bar widths for API usage
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-usage]');
+    progressBars.forEach(bar => {
+        const usage = parseInt(bar.getAttribute('data-usage')) || 0;
+        const limit = parseInt(bar.getAttribute('data-limit')) || 1;
+        const percentage = Math.round((usage / limit) * 100);
+        bar.style.width = percentage + '%';
+    });
+});
+
+function generateNewKey() {
+    const modal = new bootstrap.Modal(document.getElementById('newKeyModal'));
+    modal.show();
+}
+
+function createAPIKey() {
+    const form = document.getElementById('newKeyForm');
+    const formData = new FormData(form);
+    
+    // İzinleri topla
+    const permissions = [];
+    document.querySelectorAll('input[name="permissions"]:checked').forEach(cb => {
+        permissions.push(cb.value);
+    });
+    
+    const data = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        permissions: permissions
+    };
+    
+    fetch('/api/keys/create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Yeni anahtarı göster
+            alert(`Yeni API anahtarınız: ${data.api_key}\n\nBu anahtarı güvenli bir yerde saklayın. Bir daha gösterilmeyecektir.`);
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Bir hata oluştu: ' + error.message);
+    });
+    
+    bootstrap.Modal.getInstance(document.getElementById('newKeyModal')).hide();
+}
+
+function toggleKeyVisibility(button, fullKey) {
+    const display = button.parentElement.querySelector('.api-key-display');
+    const icon = button.querySelector('i');
+    
+    if (icon.classList.contains('fa-eye')) {
+        display.textContent = fullKey;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        display.textContent = fullKey.substring(0, 8) + '...' + fullKey.slice(-4);
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Geçici bildirim göster
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+        notification.innerHTML = '<i class="fas fa-check me-2"></i>API anahtarı kopyalandı!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    });
+}
+
+function viewKeyStats(keyId) {
+    fetch(`/api/keys/${keyId}/stats`)
+        .then(response => response.json())
+        .then(data => {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="stat-card">
+                            <h5>Toplam Kullanım</h5>
+                            <h3>${data.total_calls}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card">
+                            <h5>Bugünkü Kullanım</h5>
+                            <h3>${data.today_calls}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <canvas id="keyUsageChart" height="100"></canvas>
+                </div>
+            `;
+            
+            document.getElementById('keyStatsContent').innerHTML = content;
+            
+            // Grafik oluştur
+            const ctx = document.getElementById('keyUsageChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.chart_labels,
+                    datasets: [{
+                        label: 'API Çağrıları',
+                        data: data.chart_data,
+                        borderColor: '#007bff',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('keyStatsModal'));
+            modal.show();
+        });
+}
+
+function editKey(keyId) {
+    // Edit modal implementation
+    alert('Düzenleme özelliği yakında eklenecek.');
+}
+
+function toggleKeyStatus(keyId) {
+    fetch(`/api/keys/${keyId}/toggle`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    });
+}
+
+function deleteKey(keyId) {
+    if (confirm('Bu API anahtarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        fetch(`/api/keys/${keyId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        });
+    }
+}
+
+function testAPI() {
+    const form = document.getElementById('apiTestForm');
+    const formData = new FormData(form);
+    
+    const method = formData.get('method');
+    const endpoint = formData.get('endpoint');
+    const apiKey = formData.get('api_key');
+    const body = formData.get('body');
+    
+    if (!apiKey) {
+        alert('Lütfen bir API anahtarı seçin.');
+        return;
+    }
+    
+    const options = {
+        method: method,
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    if (body && (method === 'POST' || method === 'PUT')) {
+        try {
+            JSON.parse(body); // JSON geçerliliğini kontrol et
+            options.body = body;
+        } catch (e) {
+            alert('Geçersiz JSON formatı.');
+            return;
+        }
+    }
+    
+    fetch(endpoint, options)
+        .then(response => {
+            return response.json().then(data => ({
+                status: response.status,
+                data: data
+            }));
+        })
+        .then(result => {
+            document.getElementById('apiTestResult').style.display = 'block';
+            document.getElementById('apiTestOutput').textContent = JSON.stringify(result, null, 2);
+        })
+        .catch(error => {
+            document.getElementById('apiTestResult').style.display = 'block';
+            document.getElementById('apiTestOutput').textContent = 'Hata: ' + error.message;
+        });
+}
+</script>
+{% endblock %}

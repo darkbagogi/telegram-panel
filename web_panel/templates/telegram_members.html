@@ -1,0 +1,278 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Üye Listesi - Telegram Panel{% endblock %}
+{% block page_title %}Grup Üyelerini Görüntüle{% endblock %}
+
+{% block top_actions %}
+<button class="tg-btn tg-btn-primary" onclick="exportMembers()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+    </svg>
+    Dışa Aktar
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        Grup Bilgisi
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Grup Linki veya Kullanıcı Adı</label>
+        <input type="text" class="tg-input" id="groupLink" placeholder="@grupadi veya https://t.me/grupadi">
+        <small style="color: var(--tg-text-secondary); display: block; margin-top: 5px;">
+            Gizli gruplarda üyeleri görebilmek için grubun üyesi olmalısınız
+        </small>
+    </div>
+    
+    <button class="tg-btn tg-btn-success" onclick="loadMembers()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Üyeleri Yükle
+    </button>
+</div>
+
+<div class="tg-card" id="statsCard" style="display: none;">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </svg>
+        İstatistikler
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+        <div style="text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--tg-blue);" id="totalMembers">0</div>
+            <div style="font-size: 14px; color: var(--tg-text-secondary);">Toplam Üye</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--tg-success);" id="withUsername">0</div>
+            <div style="font-size: 14px; color: var(--tg-text-secondary);">Kullanıcı Adı Var</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--tg-warning);" id="botCount">0</div>
+            <div style="font-size: 14px; color: var(--tg-text-secondary);">Bot</div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: var(--tg-danger);" id="premiumCount">0</div>
+            <div style="font-size: 14px; color: var(--tg-text-secondary);">Premium</div>
+        </div>
+    </div>
+</div>
+
+<div class="tg-card" id="membersCard" style="display: none;">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </svg>
+        Üye Listesi
+        <div style="float: right;">
+            <input type="text" class="tg-input" id="searchInput" placeholder="Ara..." style="width: 200px; padding: 8px 12px;" onkeyup="filterMembers()">
+        </div>
+    </div>
+    
+    <div style="max-height: 600px; overflow-y: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background: var(--tg-bg); border-bottom: 2px solid var(--tg-border);">
+                <tr>
+                    <th style="padding: 12px; text-align: left;">#</th>
+                    <th style="padding: 12px; text-align: left;">Kullanıcı Adı</th>
+                    <th style="padding: 12px; text-align: left;">Ad Soyad</th>
+                    <th style="padding: 12px; text-align: left;">ID</th>
+                    <th style="padding: 12px; text-align: left;">Durum</th>
+                </tr>
+            </thead>
+            <tbody id="membersTable">
+                <!-- Üyeler buraya yüklenecek -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tg-alert tg-alert-info">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+    </svg>
+    <div>
+        <strong>💡 İpucu:</strong> Gizli/private gruplardaki üyeleri görebilmek için o grubun üyesi olmanız gerekir. Public gruplarda bu kısıtlama yoktur.
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentMembers = [];
+
+async function loadMembers() {
+    const groupLink = document.getElementById('groupLink').value.trim();
+    
+    if (!groupLink) {
+        showAlert('danger', 'Lütfen grup linki girin');
+        return;
+    }
+    
+    showLoading('Üyeler yükleniyor...');
+    
+    try {
+        const response = await fetch('/api/v1/get_members', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                group_link: groupLink
+            })
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            currentMembers = data.members;
+            displayMembers(currentMembers);
+            updateStats(currentMembers);
+            showAlert('success', `${data.total} üye başarıyla yüklendi!`);
+        } else {
+            showAlert('danger', data.error || 'Üyeler yüklenirken hata oluştu');
+        }
+    } catch (error) {
+        hideLoading();
+        showAlert('danger', 'Sunucu hatası: ' + error.message);
+    }
+}
+
+function displayMembers(members) {
+    const tbody = document.getElementById('membersTable');
+    tbody.innerHTML = '';
+    
+    members.forEach((member, index) => {
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--tg-border)';
+        row.innerHTML = `
+            <td style="padding: 12px;">${index + 1}</td>
+            <td style="padding: 12px;">
+                ${member.username ? `<a href="https://t.me/${member.username}" target="_blank" style="color: var(--tg-blue); text-decoration: none;">@${member.username}</a>` : '<span style="color: var(--tg-text-secondary);">-</span>'}
+            </td>
+            <td style="padding: 12px;">${member.first_name || ''} ${member.last_name || ''}</td>
+            <td style="padding: 12px;"><code>${member.id}</code></td>
+            <td style="padding: 12px;">
+                ${member.is_bot ? '<span style="background: var(--tg-warning); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">BOT</span>' : ''}
+                ${member.is_premium ? '<span style="background: var(--tg-blue); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">PREMIUM</span>' : ''}
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    document.getElementById('statsCard').style.display = 'block';
+    document.getElementById('membersCard').style.display = 'block';
+}
+
+function updateStats(members) {
+    const total = members.length;
+    const withUsername = members.filter(m => m.username).length;
+    const bots = members.filter(m => m.is_bot).length;
+    const premium = members.filter(m => m.is_premium).length;
+    
+    document.getElementById('totalMembers').textContent = total;
+    document.getElementById('withUsername').textContent = withUsername;
+    document.getElementById('botCount').textContent = bots;
+    document.getElementById('premiumCount').textContent = premium;
+}
+
+function filterMembers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    
+    if (!searchTerm) {
+        displayMembers(currentMembers);
+        return;
+    }
+    
+    const filtered = currentMembers.filter(member => {
+        const username = (member.username || '').toLowerCase();
+        const firstName = (member.first_name || '').toLowerCase();
+        const lastName = (member.last_name || '').toLowerCase();
+        const id = member.id.toString();
+        
+        return username.includes(searchTerm) || 
+               firstName.includes(searchTerm) || 
+               lastName.includes(searchTerm) ||
+               id.includes(searchTerm);
+    });
+    
+    displayMembers(filtered);
+}
+
+function exportMembers() {
+    if (currentMembers.length === 0) {
+        showAlert('warning', 'Önce üyeleri yükleyin');
+        return;
+    }
+    
+    // CSV formatında export
+    let csv = 'No,Kullanıcı Adı,Ad,Soyad,ID,Bot,Premium\n';
+    
+    currentMembers.forEach((member, index) => {
+        csv += `${index + 1},`;
+        csv += `${member.username || ''},`;
+        csv += `${member.first_name || ''},`;
+        csv += `${member.last_name || ''},`;
+        csv += `${member.id},`;
+        csv += `${member.is_bot ? 'Evet' : 'Hayır'},`;
+        csv += `${member.is_premium ? 'Evet' : 'Hayır'}\n`;
+    });
+    
+    // Dosyayı indir
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `members_${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showAlert('success', 'Üyeler CSV dosyasına aktarıldı');
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `tg-alert tg-alert-${type}`;
+    alertDiv.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    
+    const contentArea = document.querySelector('.content-area');
+    contentArea.insertBefore(alertDiv, contentArea.firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+function showLoading(message) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loadingOverlay';
+    loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+    loadingDiv.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+            <div class="loading" style="margin: 0 auto 15px;"></div>
+            <div>${message}</div>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+function hideLoading() {
+    const loadingDiv = document.getElementById('loadingOverlay');
+    if (loadingDiv) loadingDiv.remove();
+}
+</script>
+{% endblock %}
+""

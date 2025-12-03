@@ -1,0 +1,553 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Kredi Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Kredi Yönetimi</h4>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Kredi Yönetimi</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kredi İstatistikleri -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Toplam Kullanıcı">Toplam Kullanıcı</h5>
+                            <h3 class="my-2 py-1" id="totalUsers">-</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <div id="total-users-chart" data-colors="#727cf5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Toplam Kredi">Toplam Kredi</h5>
+                            <h3 class="my-2 py-1" id="totalCredits">-</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <div id="total-credits-chart" data-colors="#0acf97"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Günlük Satış">Günlük Satış</h5>
+                            <h3 class="my-2 py-1" id="dailySales">-</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <div id="daily-sales-chart" data-colors="#fa5c7c"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Aylık Gelir">Aylık Gelir</h5>
+                            <h3 class="my-2 py-1" id="monthlyRevenue">-</h3>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <div id="monthly-revenue-chart" data-colors="#ffbc00"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Kredi Paketleri Yönetimi -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="header-title">Kredi Paketleri</h4>
+                    <button type="button" class="btn btn-primary btn-sm float-end" data-bs-toggle="modal" data-bs-target="#addPackageModal">
+                        <i class="mdi mdi-plus"></i> Yeni Paket
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0" id="packagesTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Paket Adı</th>
+                                    <th>Kredi</th>
+                                    <th>Bonus</th>
+                                    <th>Fiyat</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Paketler buraya yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcı Kredi Durumu -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="header-title">Kullanıcı Kredi Durumu</h4>
+                    <div class="dropdown float-end">
+                        <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="mdi mdi-dots-vertical"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="javascript:void(0);" class="dropdown-item" onclick="exportUserCredits()">Excel'e Aktar</a>
+                            <a href="javascript:void(0);" class="dropdown-item" onclick="refreshUserCredits()">Yenile</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-centered table-nowrap mb-0" id="userCreditsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Kullanıcı</th>
+                                    <th>Kredi</th>
+                                    <th>Son İşlem</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Kullanıcı kredileri buraya yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Son İşlemler -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="header-title">Son Kredi İşlemleri</h4>
+                    <div class="dropdown float-end">
+                        <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="mdi mdi-dots-vertical"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="javascript:void(0);" class="dropdown-item" onclick="exportTransactions()">Excel'e Aktar</a>
+                            <a href="javascript:void(0);" class="dropdown-item" onclick="refreshTransactions()">Yenile</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0" id="transactionsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>İşlem ID</th>
+                                    <th>Kullanıcı</th>
+                                    <th>Tip</th>
+                                    <th>Kredi</th>
+                                    <th>Tutar</th>
+                                    <th>Ödeme</th>
+                                    <th>Durum</th>
+                                    <th>Tarih</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- İşlemler buraya yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Paket Modal -->
+<div class="modal fade" id="addPackageModal" tabindex="-1" aria-labelledby="addPackageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPackageModalLabel">Yeni Kredi Paketi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPackageForm">
+                    <div class="mb-3">
+                        <label for="packageName" class="form-label">Paket Adı</label>
+                        <input type="text" class="form-control" id="packageName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="packageCredits" class="form-label">Kredi Miktarı</label>
+                        <input type="number" class="form-control" id="packageCredits" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="packageBonus" class="form-label">Bonus Kredi</label>
+                        <input type="number" class="form-control" id="packageBonus" min="0" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="packagePrice" class="form-label">Fiyat (TL)</label>
+                        <input type="number" class="form-control" id="packagePrice" min="0" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="packageDescription" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="packageDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="packageActive" checked>
+                            <label class="form-check-label" for="packageActive">
+                                Aktif
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="addPackage()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kredi Ekle/Çıkar Modal -->
+<div class="modal fade" id="adjustCreditsModal" tabindex="-1" aria-labelledby="adjustCreditsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adjustCreditsModalLabel">Kredi Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustCreditsForm">
+                    <input type="hidden" id="adjustUserId">
+                    <div class="mb-3">
+                        <label for="adjustUserName" class="form-label">Kullanıcı</label>
+                        <input type="text" class="form-control" id="adjustUserName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adjustCurrentCredits" class="form-label">Mevcut Kredi</label>
+                        <input type="text" class="form-control" id="adjustCurrentCredits" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adjustAmount" class="form-label">Miktar</label>
+                        <input type="number" class="form-control" id="adjustAmount" required>
+                        <div class="form-text">Pozitif değer ekler, negatif değer çıkarır</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adjustReason" class="form-label">Sebep</label>
+                        <textarea class="form-control" id="adjustReason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="adjustCredits()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+    loadPackages();
+    loadUserCredits();
+    loadTransactions();
+});
+
+function loadStatistics() {
+    fetch('/api/admin/credit-stats', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('totalUsers').textContent = data.total_users;
+            document.getElementById('totalCredits').textContent = data.total_credits.toLocaleString();
+            document.getElementById('dailySales').textContent = '₺' + data.daily_sales.toLocaleString();
+            document.getElementById('monthlyRevenue').textContent = '₺' + data.monthly_revenue.toLocaleString();
+        }
+    })
+    .catch(error => console.error('İstatistik yükleme hatası:', error));
+}
+
+function loadPackages() {
+    fetch('/api/credit-packages', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tbody = document.querySelector('#packagesTable tbody');
+            tbody.innerHTML = '';
+            
+            data.packages.forEach(package => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${package.name}</td>
+                    <td>${package.credit_amount.toLocaleString()}</td>
+                    <td>${package.bonus_credits.toLocaleString()}</td>
+                    <td>₺${package.price.toLocaleString()}</td>
+                    <td>
+                        <span class="badge ${package.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${package.is_active ? 'Aktif' : 'Pasif'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editPackage(${package.id})">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePackage(${package.id})">
+                            <i class="mdi mdi-delete"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => console.error('Paket yükleme hatası:', error));
+}
+
+function loadUserCredits() {
+    fetch('/api/admin/user-credits', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tbody = document.querySelector('#userCreditsTable tbody');
+            tbody.innerHTML = '';
+            
+            data.users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.credit_balance.toLocaleString()}</td>
+                    <td>${user.last_transaction || 'Yok'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openAdjustCredits(${user.id}, '${user.username}', ${user.credit_balance})">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => console.error('Kullanıcı kredi yükleme hatası:', error));
+}
+
+function loadTransactions() {
+    fetch('/api/admin/credit-transactions', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tbody = document.querySelector('#transactionsTable tbody');
+            tbody.innerHTML = '';
+            
+            data.transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.transaction_id}</td>
+                    <td>${transaction.username}</td>
+                    <td>
+                        <span class="badge ${transaction.transaction_type === 'purchase' ? 'bg-success' : 'bg-warning'}">
+                            ${transaction.transaction_type === 'purchase' ? 'Satın Alma' : 'Kullanım'}
+                        </span>
+                    </td>
+                    <td>${transaction.credit_amount.toLocaleString()}</td>
+                    <td>${transaction.amount_paid ? '₺' + transaction.amount_paid.toLocaleString() : '-'}</td>
+                    <td>${transaction.payment_method || '-'}</td>
+                    <td>
+                        <span class="badge ${getStatusBadgeClass(transaction.payment_status)}">
+                            ${getStatusText(transaction.payment_status)}
+                        </span>
+                    </td>
+                    <td>${new Date(transaction.created_at).toLocaleDateString('tr-TR')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewTransaction('${transaction.transaction_id}')">
+                            <i class="mdi mdi-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => console.error('İşlem yükleme hatası:', error));
+}
+
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'completed': return 'bg-success';
+        case 'pending': return 'bg-warning';
+        case 'failed': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'completed': return 'Tamamlandı';
+        case 'pending': return 'Bekliyor';
+        case 'failed': return 'Başarısız';
+        default: return 'Bilinmiyor';
+    }
+}
+
+function addPackage() {
+    const formData = {
+        name: document.getElementById('packageName').value,
+        credit_amount: parseInt(document.getElementById('packageCredits').value),
+        bonus_credits: parseInt(document.getElementById('packageBonus').value),
+        price: parseFloat(document.getElementById('packagePrice').value),
+        description: document.getElementById('packageDescription').value,
+        is_active: document.getElementById('packageActive').checked
+    };
+
+    fetch('/api/admin/credit-packages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addPackageModal')).hide();
+            document.getElementById('addPackageForm').reset();
+            loadPackages();
+            showAlert('Paket başarıyla eklendi', 'success');
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Paket ekleme hatası:', error);
+        showAlert('Paket eklenirken hata oluştu', 'danger');
+    });
+}
+
+function openAdjustCredits(userId, username, currentCredits) {
+    document.getElementById('adjustUserId').value = userId;
+    document.getElementById('adjustUserName').value = username;
+    document.getElementById('adjustCurrentCredits').value = currentCredits.toLocaleString();
+    document.getElementById('adjustAmount').value = '';
+    document.getElementById('adjustReason').value = '';
+    
+    new bootstrap.Modal(document.getElementById('adjustCreditsModal')).show();
+}
+
+function adjustCredits() {
+    const userId = document.getElementById('adjustUserId').value;
+    const amount = parseInt(document.getElementById('adjustAmount').value);
+    const reason = document.getElementById('adjustReason').value;
+
+    fetch('/api/admin/adjust-credits', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            amount: amount,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('adjustCreditsModal')).hide();
+            loadUserCredits();
+            loadTransactions();
+            showAlert('Kredi başarıyla güncellendi', 'success');
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Kredi güncelleme hatası:', error);
+        showAlert('Kredi güncellenirken hata oluştu', 'danger');
+    });
+}
+
+function refreshUserCredits() {
+    loadUserCredits();
+}
+
+function refreshTransactions() {
+    loadTransactions();
+}
+
+function showAlert(message, type) {
+    // Bootstrap alert gösterme fonksiyonu
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

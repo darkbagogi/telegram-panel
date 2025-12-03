@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Üye Transfer Sistemi - Telentropy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0088cc;
+            --secondary-color: #005580;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --dark-bg: #1a1a1a;
+            --darker-bg: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+            color: var(--text-primary);
+        }
+        .navbar { background: var(--card-bg) !important; border-bottom: 1px solid var(--border-color); }
+        .navbar-brand { color: var(--primary-color) !important; font-weight: bold; }
+        .transfer-card, .page-header, .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .form-control, .form-select {
+            background: var(--darker-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--darker-bg);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 136, 204, 0.25);
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border: none; }
+        .member-list { max-height: 400px; overflow-y: auto; background: var(--darker-bg); border-radius: 8px; padding: 1rem; }
+        .member-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; }
+        .member-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .member-info { flex: 1; }
+        .loading-spinner { display: none; text-align: center; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('telentro_dashboard') }}"><i class="fas fa-users"></i> Telentropy</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('telentro_dashboard') }}"><i class="fas fa-home"></i> Ana Panel</a>
+                <a class="nav-link active" href="#"><i class="fas fa-exchange-alt"></i> Üye Transfer</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container container">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-exchange-alt"></i> Üye Transfer Sistemi</h1>
+            <p class="page-subtitle">Kanaldan kanala üye çekme ve davet etme sistemi</p>
+        </div>
+
+        <div class="transfer-card">
+            <h2 class="section-title"><i class="fas fa-cog"></i> Transfer Ayarları</h2>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="sourceGroup" class="form-label">Kaynak Grup</label>
+                    <select class="form-select" id="sourceGroup"><option value="">Grup Seçin...</option></select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="targetGroup" class="form-label">Hedef Grup</label>
+                    <select class="form-select" id="targetGroup"><option value="">Grup Seçin...</option></select>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" onclick="loadGroupMembers()"><i class="fas fa-search"></i> Üyeleri Yükle</button>
+                <button class="btn btn-success" onclick="startTransfer()"><i class="fas fa-play"></i> Transferi Başlat</button>
+            </div>
+        </div>
+
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Yükleniyor...</span></div>
+            <p class="mt-2">İşlem yapılıyor...</p>
+        </div>
+
+        <div class="transfer-card" id="memberSelectionCard" style="display: none;">
+            <h2 class="section-title"><i class="fas fa-users"></i> Üye Seçimi (<span id="totalMembers">0</span>)</h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span><span id="selectedCount">0</span> üye seçildi</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllMembers()">Tümünü Seç</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="deselectAllMembers()">Seçimi Temizle</button>
+                </div>
+            </div>
+            <div class="member-list" id="memberList"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedMembers = new Set();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserGroups();
+        });
+
+        async function loadUserGroups() {
+            try {
+                const response = await fetch('/api/telegram/groups', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const sourceSelect = document.getElementById('sourceGroup');
+                    const targetSelect = document.getElementById('targetGroup');
+                    sourceSelect.innerHTML = '<option value="">Grup Seçin...</option>';
+                    targetSelect.innerHTML = '<option value="">Grup Seçin...</option>';
+                    data.groups.forEach(group => {
+                        const option = `<option value="${group.id}">${group.title}</option>`;
+                        sourceSelect.insertAdjacentHTML('beforeend', option);
+                        targetSelect.insertAdjacentHTML('beforeend', option);
+                    });
+                } else {
+                    alert('Gruplar yüklenemedi: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Grup yükleme hatası:', error);
+                alert('Gruplar yüklenirken bir hata oluştu.');
+            }
+        }
+
+        async function loadGroupMembers() {
+            const sourceGroupId = document.getElementById('sourceGroup').value;
+            if (!sourceGroupId) {
+                alert('Lütfen bir kaynak grup seçin.');
+                return;
+            }
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const memberSelectionCard = document.getElementById('memberSelectionCard');
+            const memberList = document.getElementById('memberList');
+            const totalMembersStat = document.getElementById('totalMembers');
+
+            loadingSpinner.style.display = 'block';
+            memberSelectionCard.style.display = 'none';
+            memberList.innerHTML = '';
+            selectedMembers.clear();
+            document.getElementById('selectedCount').textContent = '0';
+
+            try {
+                const extractResponse = await fetch('/api/telegram/extract_members', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                    },
+                    body: JSON.stringify({ group_id: sourceGroupId, limit: 1000 })
+                });
+                const extractData = await extractResponse.json();
+
+                if (!extractData.success && extractData.error && !extractData.error.includes("already exists")) {
+                    throw new Error(extractData.error || 'Backend member extraction failed.');
+                }
+
+                const response = await fetch(`/api/telegram/group_members/${sourceGroupId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    totalMembersStat.textContent = data.members.length;
+                    memberList.innerHTML = data.members.length === 0 ? '<p class="text-center text-secondary">Bu grupta hiç üye bulunamadı.</p>' : '';
+                    data.members.forEach(member => {
+                        const memberItem = `
+                            <div class="member-item" id="member-${member.id}">
+                                <div class="member-avatar">${member.first_name ? member.first_name.charAt(0).toUpperCase() : (member.username ? member.username.charAt(0).toUpperCase() : 'U')}</div>
+                                <div class="member-info">
+                                    <div class="member-name">${member.first_name || ''} ${member.last_name || ''}</div>
+                                    <div class="member-status">@${member.username || 'N/A'}</div>
+                                </div>
+                                <div class="checkbox-wrapper">
+                                    <input class="form-check-input" type="checkbox" value="${member.id}" onchange="toggleMemberSelection(this, ${member.id})">
+                                </div>
+                            </div>`;
+                        memberList.insertAdjacentHTML('beforeend', memberItem);
+                    });
+                    memberSelectionCard.style.display = 'block';
+                } else {
+                    alert(`Üyeler yüklenemedi: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Üye yükleme sırasında bir hata oluştu:', error);
+                alert('Üye yükleme sırasında bir hata oluştu: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function toggleMemberSelection(checkbox, memberId) {
+            if (checkbox.checked) {
+                selectedMembers.add(memberId);
+            } else {
+                selectedMembers.delete(memberId);
+            }
+            document.getElementById('selectedCount').textContent = selectedMembers.size;
+        }
+
+        function selectAllMembers() {
+            document.querySelectorAll('#memberList .form-check-input').forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    selectedMembers.add(parseInt(checkbox.value));
+                }
+            });
+            document.getElementById('selectedCount').textContent = selectedMembers.size;
+        }
+
+        function deselectAllMembers() {
+            document.querySelectorAll('#memberList .form-check-input').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedMembers.clear();
+            document.getElementById('selectedCount').textContent = '0';
+        }
+
+        function startTransfer() {
+            if (selectedMembers.size === 0) {
+                alert('Lütfen transfer edilecek üyeleri seçin.');
+                return;
+            }
+            alert(`Transferring ${selectedMembers.size} members...`);
+            // TODO: Implement actual transfer logic
+        }
+    </script>
+</body>
+</html>

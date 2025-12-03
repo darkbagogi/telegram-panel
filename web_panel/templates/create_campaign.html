@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}Yeni Kampanya - Telegram Premium Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <h2>
+                    <i class="fas fa-plus-circle me-2"></i>Yeni Kampanya Oluştur
+                </h2>
+                <p class="text-muted">Telegram grupları arasında üye transferi için yeni bir kampanya oluşturun</p>
+            </div>
+
+            <!-- Campaign Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" id="campaignForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Step 1: Basic Information -->
+                        <div class="step" id="step1">
+                            <h5 class="mb-4">
+                                <span class="badge bg-primary me-2">1</span>
+                                Temel Bilgiler
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    {{ form.transfer_mode.label(class="form-label") }}
+                                    {{ form.transfer_mode(class="form-select") }}
+                                    <div class="form-text">
+                                        <small>
+                                            <strong>Konservatif:</strong> 30/gün, güvenli<br>
+                                            <strong>Dengeli:</strong> 40/gün, orta risk<br>
+                                            <strong>Agresif:</strong> 50/gün, hızlı
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.description.label(class="form-label") }}
+                                {{ form.description(class="form-control", rows="3") }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.description.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                                    Devam Et <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Group Selection -->
+                        <div class="step d-none" id="step2">
+                            <h5 class="mb-4">
+                                <span class="badge bg-primary me-2">2</span>
+                                Grup Seçimi
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.source_group.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.source_group(class="form-control", placeholder="@kaynak_grup veya grup linki") }}
+                                        <button type="button" class="btn btn-outline-secondary" onclick="loadGroupInfo('source')">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.source_group.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.source_group.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div id="sourceGroupInfo" class="mt-2"></div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    {{ form.target_group.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.target_group(class="form-control", placeholder="@hedef_grup veya grup linki") }}
+                                        <button type="button" class="btn btn-outline-secondary" onclick="loadGroupInfo('target')">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.target_group.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.target_group.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div id="targetGroupInfo" class="mt-2"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Önemli:</strong> Her iki grubun da yöneticisi olmanız ve bot'un gruplara eklenmiş olması gerekir.
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
+                                    <i class="fas fa-arrow-left me-2"></i>Geri
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                                    Devam Et <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Filter Settings -->
+                        <div class="step d-none" id="step3">
+                            <h5 class="mb-4">
+                                <span class="badge bg-primary me-2">3</span>
+                                Filtreleme Ayarları
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.filter_type.label(class="form-label") }}
+                                    {{ form.filter_type(class="form-select") }}
+                                    <div class="form-text">
+                                        Hangi üyelerin davet edileceğini belirleyin
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Minimum Aktivite (gün)</label>
+                                    <input type="number" name="min_activity_days" class="form-control" 
+                                           value="7" min="0" max="365">
+                                    <div class="form-text">
+                                        Son X gün içinde aktif olan üyeler
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="exclude_bots" class="form-check-input" checked>
+                                        <label class="form-check-label">Bot hesapları hariç tut</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="exclude_deleted" class="form-check-input" checked>
+                                        <label class="form-check-label">Silinmiş hesapları hariç tut</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep(2)">
+                                    <i class="fas fa-arrow-left me-2"></i>Geri
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+                                    Devam Et <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Schedule & Confirmation -->
+                        <div class="step d-none" id="step4">
+                            <h5 class="mb-4">
+                                <span class="badge bg-primary me-2">4</span>
+                                Zamanlama ve Onay
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Başlangıç Zamanı</label>
+                                    <select name="start_time" class="form-select">
+                                        <option value="now">Hemen Başlat</option>
+                                        <option value="schedule">Zamanla</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3" id="scheduleDateTime" style="display: none;">
+                                    <label class="form-label">Tarih ve Saat</label>
+                                    <input type="datetime-local" name="scheduled_time" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <!-- Campaign Summary -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clipboard-list me-2"></i>Kampanya Özeti
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td><strong>Kampanya Adı:</strong></td>
+                                                    <td id="summaryName">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Transfer Modu:</strong></td>
+                                                    <td id="summaryMode">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Kaynak Grup:</strong></td>
+                                                    <td id="summarySource">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Hedef Grup:</strong></td>
+                                                    <td id="summaryTarget">-</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td><strong>Filtreleme:</strong></td>
+                                                    <td id="summaryFilter">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Tahmini Süre:</strong></td>
+                                                    <td id="summaryDuration">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Günlük Limit:</strong></td>
+                                                    <td id="summaryDailyLimit">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Başlangıç:</strong></td>
+                                                    <td id="summaryStartTime">Hemen</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Legal Consent -->
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Yasal Uyarı</h6>
+                                <div class="form-check">
+                                    <input type="checkbox" name="legal_consent" class="form-check-input" required>
+                                    <label class="form-check-label">
+                                        KVKK, GDPR ve Telegram kullanım şartlarına uygun olarak hareket edeceğimi, 
+                                        gerekli izinleri aldığımı ve tüm yasal sorumluluğu kabul ettiğimi onaylıyorum.
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep(3)">
+                                    <i class="fas fa-arrow-left me-2"></i>Geri
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-rocket me-2"></i>Kampanyayı Oluştur
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentStep = 1;
+
+function nextStep(step) {
+    // Validate current step
+    if (!validateStep(currentStep)) {
+        return;
+    }
+    
+    // Hide current step
+    document.getElementById(`step${currentStep}`).classList.add('d-none');
+    
+    // Show next step
+    document.getElementById(`step${step}`).classList.remove('d-none');
+    
+    // Update summary if going to step 4
+    if (step === 4) {
+        updateSummary();
+    }
+    
+    currentStep = step;
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+
+function prevStep(step) {
+    // Hide current step
+    document.getElementById(`step${currentStep}`).classList.add('d-none');
+    
+    // Show previous step
+    document.getElementById(`step${step}`).classList.remove('d-none');
+    
+    currentStep = step;
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+
+function validateStep(step) {
+    switch(step) {
+        case 1:
+            const name = document.querySelector('input[name="name"]').value;
+            if (!name.trim()) {
+                alert('Kampanya adı gereklidir.');
+                return false;
+            }
+            break;
+        case 2:
+            const sourceGroup = document.querySelector('input[name="source_group"]').value;
+            const targetGroup = document.querySelector('input[name="target_group"]').value;
+            if (!sourceGroup.trim() || !targetGroup.trim()) {
+                alert('Kaynak ve hedef grup bilgileri gereklidir.');
+                return false;
+            }
+            break;
+        case 3:
+            // Filter validation if needed
+            break;
+    }
+    return true;
+}
+
+function updateSummary() {
+    const name = document.querySelector('input[name="name"]').value;
+    const mode = document.querySelector('select[name="transfer_mode"]').value;
+    const sourceGroup = document.querySelector('input[name="source_group"]').value;
+    const targetGroup = document.querySelector('input[name="target_group"]').value;
+    const filterType = document.querySelector('select[name="filter_type"]').value;
+    
+    document.getElementById('summaryName').textContent = name;
+    document.getElementById('summaryMode').textContent = mode;
+    document.getElementById('summarySource').textContent = sourceGroup;
+    document.getElementById('summaryTarget').textContent = targetGroup;
+    document.getElementById('summaryFilter').textContent = filterType;
+    
+    // Set daily limits based on mode
+    const dailyLimits = {
+        'conservative': '30',
+        'balanced': '40', 
+        'aggressive': '50'
+    };
+    document.getElementById('summaryDailyLimit').textContent = dailyLimits[mode] + ' davet/gün';
+}
+
+function loadGroupInfo(type) {
+    const input = document.querySelector(`input[name="${type}_group"]`);
+    const infoDiv = document.getElementById(`${type}GroupInfo`);
+    const groupValue = input.value.trim();
+    
+    if (!groupValue) {
+        alert('Lütfen grup adı veya linkini girin.');
+        return;
+    }
+    
+    infoDiv.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Grup bilgileri yükleniyor...';
+    
+    fetch('/api/group-info', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            group: groupValue
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            infoDiv.innerHTML = `
+                <div class="alert alert-success p-2 mb-0">
+                    <small>
+                        <strong>${data.title}</strong><br>
+                        Üye sayısı: ${data.member_count}<br>
+                        Tür: ${data.type}
+                    </small>
+                </div>
+            `;
+        } else {
+            infoDiv.innerHTML = `
+                <div class="alert alert-danger p-2 mb-0">
+                    <small>Grup bilgileri alınamadı: ${data.message}</small>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        infoDiv.innerHTML = `
+            <div class="alert alert-danger p-2 mb-0">
+                <small>Bağlantı hatası oluştu.</small>
+            </div>
+        `;
+    });
+}
+
+// Handle start time selection
+document.querySelector('select[name="start_time"]').addEventListener('change', function() {
+    const scheduleDiv = document.getElementById('scheduleDateTime');
+    const summaryStartTime = document.getElementById('summaryStartTime');
+    
+    if (this.value === 'schedule') {
+        scheduleDiv.style.display = 'block';
+        summaryStartTime.textContent = 'Zamanlanacak';
+    } else {
+        scheduleDiv.style.display = 'none';
+        summaryStartTime.textContent = 'Hemen';
+    }
+});
+
+// Handle datetime input change
+document.querySelector('input[name="scheduled_time"]').addEventListener('change', function() {
+    const summaryStartTime = document.getElementById('summaryStartTime');
+    if (this.value) {
+        const date = new Date(this.value);
+        summaryStartTime.textContent = date.toLocaleString('tr-TR');
+    }
+});
+
+// Form submission
+document.getElementById('campaignForm').addEventListener('submit', function(e) {
+    const legalConsent = document.querySelector('input[name="legal_consent"]');
+    if (!legalConsent.checked) {
+        e.preventDefault();
+        alert('Yasal onayı kabul etmeniz gereklidir.');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Oluşturuluyor...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

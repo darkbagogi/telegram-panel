@@ -1,0 +1,125 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Kullanıcı Bilgi Sorgulama{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-search"></i> Kullanıcı Bilgi Sorgulama
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Sorgulama Tipi</label>
+                                <select class="form-select" id="queryType">
+                                    <option value="phone">Telefon Numarası</option>
+                                    <option value="username">Kullanıcı Adı</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label" id="queryLabel">Telefon Numarası</label>
+                                <input type="text" class="form-control" id="queryInput" 
+                                       placeholder="+905551234567">
+                                <small class="text-muted">Örnek: +905551234567 veya @username</small>
+                            </div>
+                            
+                            <button class="btn btn-primary" id="lookupBtn">
+                                <i class="fas fa-search"></i> Sorgula
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div id="resultCard" class="card d-none">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">Kullanıcı Bilgileri</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="userInfo"></div>
+                                </div>
+                            </div>
+                            
+                            <div id="errorCard" class="alert alert-danger d-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('queryType').addEventListener('change', function() {
+    const type = this.value;
+    const label = document.getElementById('queryLabel');
+    const input = document.getElementById('queryInput');
+    
+    if (type === 'phone') {
+        label.textContent = 'Telefon Numarası';
+        input.placeholder = '+905551234567';
+    } else {
+        label.textContent = 'Kullanıcı Adı';
+        input.placeholder = '@username';
+    }
+});
+
+document.getElementById('lookupBtn').addEventListener('click', async function() {
+    const query = document.getElementById('queryInput').value.trim();
+    const type = document.getElementById('queryType').value;
+    const btn = this;
+    
+    if (!query) {
+        alert('Lütfen bir değer girin');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sorgulanıyor...';
+    
+    document.getElementById('resultCard').classList.add('d-none');
+    document.getElementById('errorCard').classList.add('d-none');
+    
+    try {
+        const response = await fetch('/api/v1/user_lookup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query, type})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const user = data.user;
+            document.getElementById('userInfo').innerHTML = `
+                <table class="table table-sm">
+                    <tr><th>ID:</th><td>${user.id}</td></tr>
+                    <tr><th>Kullanıcı Adı:</th><td>${user.username || 'Yok'}</td></tr>
+                    <tr><th>Ad:</th><td>${user.first_name || ''}</td></tr>
+                    <tr><th>Soyad:</th><td>${user.last_name || ''}</td></tr>
+                    <tr><th>Telefon:</th><td>${user.phone || 'Gizli'}</td></tr>
+                    <tr><th>Bot:</th><td>${user.is_bot ? 'Evet' : 'Hayır'}</td></tr>
+                    <tr><th>Premium:</th><td>${user.is_premium ? 'Evet' : 'Hayır'}</td></tr>
+                    ${user.bio ? `<tr><th>Bio:</th><td>${user.bio}</td></tr>` : ''}
+                </table>
+            `;
+            document.getElementById('resultCard').classList.remove('d-none');
+        } else {
+            document.getElementById('errorCard').textContent = data.error;
+            document.getElementById('errorCard').classList.remove('d-none');
+        }
+    } catch (error) {
+        document.getElementById('errorCard').textContent = 'Hata: ' + error.message;
+        document.getElementById('errorCard').classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Sorgula';
+    }
+});
+</script>
+{% endblock %}

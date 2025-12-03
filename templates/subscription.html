@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Abonelik - Telegram Premium Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="fas fa-crown me-2"></i>Abonelik Yönetimi</h2>
+        </div>
+    </div>
+
+    <!-- Mevcut Abonelik Durumu -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-crown me-2"></i>Mevcut Aboneliğiniz
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="text-primary">{{ current_user.subscription_type|title }} Plan</h4>
+                            <p class="text-muted mb-2">
+                                {% if current_user.subscription_type == 'free' %}
+                                    Ücretsiz plan ile temel özellikleri kullanabilirsiniz.
+                                {% elif current_user.subscription_type == 'premium' %}
+                                    Premium plan ile gelişmiş özelliklere erişiminiz var.
+                                {% else %}
+                                    Kurumsal plan ile tüm özelliklere sınırsız erişiminiz var.
+                                {% endif %}
+                            </p>
+                            {% if current_user.subscription_expires %}
+                            <p class="mb-0">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                <strong>Bitiş Tarihi:</strong> {{ current_user.subscription_expires.strftime('%d.%m.%Y') }}
+                                {% set days_left = (current_user.subscription_expires - moment.utcnow()).days %}
+                                {% if days_left <= 7 %}
+                                    <span class="badge bg-warning ms-2">{{ days_left }} gün kaldı</span>
+                                {% endif %}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if current_user.subscription_type == 'free' %}
+                                <button class="btn btn-primary btn-lg" data-action="show-upgrade-modal">
+                                    <i class="fas fa-arrow-up me-1"></i>Yükselt
+                                </button>
+                            {% else %}
+                                <button class="btn btn-outline-primary" data-action="show-manage-modal">
+                                    <i class="fas fa-cog me-1"></i>Yönet
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kullanım İstatistikleri -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ usage_stats.daily_invites }}/{{ limits.daily_limit }}</h3>
+                    <p>Günlük Davet</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar" data-width="{{ (usage_stats.daily_invites / limits.daily_limit * 100)|round }}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ usage_stats.campaigns_used }}/{{ limits.campaign_limit }}</h3>
+                    <p>Aktif Kampanya</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" data-width="{{ (usage_stats.campaigns_used / limits.campaign_limit * 100)|round }}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ usage_stats.api_calls }}/{{ limits.api_limit }}</h3>
+                    <p>API Çağrısı</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" data-width="{{ (usage_stats.api_calls / limits.api_limit * 100)|round }}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fiyatlandırma Planları -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Fiyatlandırma Planları</h3>
+        </div>
+        
+        <!-- Free Plan -->
+        <div class="col-lg-4 mb-4">
+            <div class="pricing-card {{ 'active' if current_user.subscription_type == 'free' else '' }}">
+                <div class="pricing-header">
+                    <h4>Ücretsiz</h4>
+                    <div class="price">
+                        <span class="currency">₺</span>
+                        <span class="amount">0</span>
+                        <span class="period">/ay</span>
+                    </div>
+                </div>
+                <div class="pricing-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> 10 günlük davet limiti</li>
+                        <li><i class="fas fa-check"></i> 1 aktif kampanya</li>
+                        <li><i class="fas fa-check"></i> Temel analytics</li>
+                        <li><i class="fas fa-check"></i> Email destek</li>
+                        <li><i class="fas fa-times text-muted"></i> Bulk transfer</li>
+                        <li><i class="fas fa-times text-muted"></i> API erişimi</li>
+                        <li><i class="fas fa-times text-muted"></i> Öncelikli destek</li>
+                    </ul>
+                </div>
+                <div class="pricing-footer">
+                    {% if current_user.subscription_type == 'free' %}
+                        <button class="btn btn-outline-primary" disabled>Mevcut Plan</button>
+                    {% else %}
+                        <button class="btn btn-outline-secondary" data-action="downgrade-plan" data-plan="free">
+                            Düşür
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Premium Plan -->
+        <div class="col-lg-4 mb-4">
+            <div class="pricing-card {{ 'active' if current_user.subscription_type == 'premium' else '' }}">
+                <div class="pricing-header">
+                    <h4>Premium</h4>
+                    <div class="price">
+                        <span class="currency">₺</span>
+                        <span class="amount">99</span>
+                        <span class="period">/ay</span>
+                    </div>
+                    <div class="badge bg-success">Popüler</div>
+                </div>
+                <div class="pricing-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> 50 günlük davet limiti</li>
+                        <li><i class="fas fa-check"></i> 5 aktif kampanya</li>
+                        <li><i class="fas fa-check"></i> Gelişmiş analytics</li>
+                        <li><i class="fas fa-check"></i> Bulk transfer</li>
+                        <li><i class="fas fa-check"></i> API erişimi (1000 çağrı/gün)</li>
+                        <li><i class="fas fa-check"></i> Öncelikli email destek</li>
+                        <li><i class="fas fa-check"></i> Özel filtreler</li>
+                    </ul>
+                </div>
+                <div class="pricing-footer">
+                    {% if current_user.subscription_type == 'premium' %}
+                        <button class="btn btn-primary" disabled>Mevcut Plan</button>
+                    {% elif current_user.subscription_type == 'free' %}
+                        <button class="btn btn-primary" data-action="upgrade-plan" data-plan="premium">
+                            Yükselt
+                        </button>
+                    {% else %}
+                        <button class="btn btn-outline-secondary" data-action="downgrade-plan" data-plan="premium">
+                            Düşür
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Corporate Plan -->
+        <div class="col-lg-4 mb-4">
+            <div class="pricing-card {{ 'active' if current_user.subscription_type == 'corporate' else '' }}">
+                <div class="pricing-header">
+                    <h4>Kurumsal</h4>
+                    <div class="price">
+                        <span class="currency">₺</span>
+                        <span class="amount">299</span>
+                        <span class="period">/ay</span>
+                    </div>
+                </div>
+                <div class="pricing-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> Sınırsız günlük davet</li>
+                        <li><i class="fas fa-check"></i> Sınırsız kampanya</li>
+                        <li><i class="fas fa-check"></i> Tam analytics + raporlar</li>
+                        <li><i class="fas fa-check"></i> Gelişmiş bulk transfer</li>
+                        <li><i class="fas fa-check"></i> Sınırsız API erişimi</li>
+                        <li><i class="fas fa-check"></i> 7/24 telefon desteği</li>
+                        <li><i class="fas fa-check"></i> Özel entegrasyonlar</li>
+                    </ul>
+                </div>
+                <div class="pricing-footer">
+                    {% if current_user.subscription_type == 'corporate' %}
+                        <button class="btn btn-primary" disabled>Mevcut Plan</button>
+                    {% else %}
+                        <button class="btn btn-primary" data-action="upgrade-plan" data-plan="corporate">
+                            Yükselt
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fatura Geçmişi -->
+    {% if invoices %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">Fatura Geçmişi</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fatura No</th>
+                                    <th>Tarih</th>
+                                    <th>Plan</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td><strong>#{{ invoice.id }}</strong></td>
+                                    <td>{{ invoice.created_at.strftime('%d.%m.%Y') }}</td>
+                                    <td>{{ invoice.plan|title }}</td>
+                                    <td>₺{{ invoice.amount }}</td>
+                                    <td>
+                                        {% if invoice.status == 'paid' %}
+                                            <span class="badge bg-success">Ödendi</span>
+                                        {% elif invoice.status == 'pending' %}
+                                            <span class="badge bg-warning">Beklemede</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">İptal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-action="download-invoice" data-invoice-id="{{ invoice.id }}">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Upgrade Modal -->
+<div class="modal fade" id="upgradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Plan Yükseltme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="upgrade-content">
+                    <!-- Dinamik içerik -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="confirm-upgrade">
+                    <i class="fas fa-credit-card me-1"></i>Ödeme Yap
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Modal -->
+<div class="modal fade" id="manageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Abonelik Yönetimi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action" data-action="update-payment-method">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Ödeme Yöntemini Güncelle
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-action="download-invoices">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Faturaları İndir
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-action="cancel-subscription">
+                        <i class="fas fa-times-circle me-2 text-danger"></i>
+                        Aboneliği İptal Et
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set progress bar widths
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+
+function showUpgradeModal() {
+    const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+    modal.show();
+}
+
+function showManageModal() {
+    const modal = new bootstrap.Modal(document.getElementById('manageModal'));
+    modal.show();
+}
+
+function upgradePlan(plan) {
+    const prices = {
+        'premium': 99,
+        'corporate': 299
+    };
+    
+    const features = {
+        'premium': [
+            '50 günlük davet limiti',
+            '5 aktif kampanya',
+            'Gelişmiş analytics',
+            'Bulk transfer',
+            'API erişimi',
+            'Öncelikli destek'
+        ],
+        'corporate': [
+            'Sınırsız günlük davet',
+            'Sınırsız kampanya',
+            'Tam analytics + raporlar',
+            'Gelişmiş bulk transfer',
+            'Sınırsız API erişimi',
+            '7/24 telefon desteği',
+            'Özel entegrasyonlar'
+        ]
+    };
+    
+    const content = `
+        <div class="text-center mb-4">
+            <h4>${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan</h4>
+            <div class="display-6 text-primary">₺${prices[plan]}/ay</div>
+        </div>
+        <div class="mb-4">
+            <h6>Bu plan ile şunları elde edeceksiniz:</h6>
+            <ul class="list-unstyled">
+                ${features[plan].map(feature => `<li><i class="fas fa-check text-success me-2"></i>${feature}</li>`).join('')}
+            </ul>
+        </div>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            İlk 7 gün ücretsiz deneme. İstediğiniz zaman iptal edebilirsiniz.
+        </div>
+    `;
+    
+    document.getElementById('upgrade-content').innerHTML = content;
+    document.getElementById('confirm-upgrade').onclick = () => processUpgrade(plan);
+    
+    showUpgradeModal();
+}
+
+function downgradePlan(plan) {
+    if (confirm(`${plan.charAt(0).toUpperCase() + plan.slice(1)} planına geçmek istediğinizden emin misiniz?`)) {
+        fetch('/api/subscription/downgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ plan: plan })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        });
+    }
+}
+
+function processUpgrade(plan) {
+    // Ödeme işlemi simülasyonu
+    const button = document.getElementById('confirm-upgrade');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>İşleniyor...';
+    button.disabled = true;
+    
+    fetch('/api/subscription/upgrade', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan: plan })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Aboneliğiniz başarıyla yükseltildi!');
+            location.reload();
+        } else {
+            alert('Hata: ' + data.message);
+            button.innerHTML = '<i class="fas fa-credit-card me-1"></i>Ödeme Yap';
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('Bir hata oluştu: ' + error.message);
+        button.innerHTML = '<i class="fas fa-credit-card me-1"></i>Ödeme Yap';
+        button.disabled = false;
+    });
+}
+
+function updatePaymentMethod() {
+    alert('Ödeme yöntemi güncelleme özelliği yakında eklenecek.');
+}
+
+function downloadInvoices() {
+    window.open('/api/invoices/download', '_blank');
+}
+
+function downloadInvoice(invoiceId) {
+    window.open(`/api/invoices/${invoiceId}/download`, '_blank');
+}
+
+function cancelSubscription() {
+    if (confirm('Aboneliğinizi iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        fetch('/api/subscription/cancel', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Aboneliğiniz başarıyla iptal edildi.');
+                location.reload();
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        });
+    }
+}
+
+// Event listeners for data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle button clicks with data-action attributes
+    document.addEventListener('click', function(e) {
+        const action = e.target.closest('[data-action]')?.getAttribute('data-action');
+        
+        switch(action) {
+            case 'show-upgrade-modal':
+                showUpgradeModal();
+                break;
+            case 'show-manage-modal':
+                showManageModal();
+                break;
+            case 'upgrade-plan':
+                const planToUpgrade = e.target.closest('[data-plan]').getAttribute('data-plan');
+                upgradePlan(planToUpgrade);
+                break;
+            case 'downgrade-plan':
+                const planToDowngrade = e.target.closest('[data-plan]').getAttribute('data-plan');
+                downgradePlan(planToDowngrade);
+                break;
+            case 'download-invoice':
+                const invoiceId = e.target.closest('[data-invoice-id]').getAttribute('data-invoice-id');
+                downloadInvoice(invoiceId);
+                break;
+            case 'update-payment-method':
+                e.preventDefault();
+                updatePaymentMethod();
+                break;
+            case 'download-invoices':
+                e.preventDefault();
+                downloadInvoices();
+                break;
+            case 'cancel-subscription':
+                e.preventDefault();
+                cancelSubscription();
+                break;
+        }
+    });
+});
+</script>
+{% endblock %}

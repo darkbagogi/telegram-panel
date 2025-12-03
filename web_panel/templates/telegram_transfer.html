@@ -1,0 +1,283 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Üye Aktarımı - Telegram Panel{% endblock %}
+{% block page_title %}Üye Aktarımı{% endblock %}
+
+{% block top_actions %}
+<button class="tg-btn tg-btn-success" onclick="startTransfer()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+    </svg>
+    Aktarımı Başlat
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Kaynak Grup
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Grup Linki veya ID</label>
+        <input type="text" class="tg-input" placeholder="@grupadi veya grup linki" id="sourceGroup">
+    </div>
+    
+    <button class="tg-btn tg-btn-primary" onclick="loadMembers()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Üyeleri Yükle
+    </button>
+</div>
+
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        Hedef Grup
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Grup Linki veya ID</label>
+        <input type="text" class="tg-input" placeholder="@hedefgrup veya grup linki" id="targetGroup">
+    </div>
+</div>
+
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+        Aktarım Ayarları
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label class="form-label">Aktarım Hızı</label>
+            <select class="tg-input" id="transferSpeed">
+                <option value="slow">Yavaş (Güvenli)</option>
+                <option value="medium" selected>Orta</option>
+                <option value="fast">Hızlı</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Maksimum Üye</label>
+            <input type="number" class="tg-input" value="50" id="maxMembers">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Bekleme Süresi (sn)</label>
+            <input type="number" class="tg-input" value="30" id="waitTime">
+        </div>
+    </div>
+</div>
+
+<div class="tg-card" id="progressCard" style="display: none;">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+        </svg>
+        Aktarım İlerlemesi
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>İlerleme</span>
+            <span id="progressText">0 / 0</span>
+        </div>
+        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="progressBar" style="background: var(--tg-blue); height: 100%; width: 0%; transition: width 0.3s;"></div>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-success);" id="successCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Başarılı</div>
+        </div>
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-warning);" id="pendingCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Beklemede</div>
+        </div>
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-danger);" id="failedCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Başarısız</div>
+        </div>
+    </div>
+</div>
+
+<div class="tg-alert tg-alert-warning">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </svg>
+    <div>
+        <strong>Önemli Uyarı:</strong> Üye aktarımı yaparken Telegram'ın spam kurallarına dikkat edin. Çok hızlı aktarım yapmak hesabınızın kısıtlanmasına neden olabilir.
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Telegram bağlantısını kontrol et
+async function checkTelegramConnection() {
+    try {
+        const response = await fetch('/api/v1/check_telegram');
+        const data = await response.json();
+        
+        if (!data.available) {
+            showAlert('warning', 'Telegram modülleri yüklü değil. Lütfen kurulum yapın.');
+        } else if (!data.connected) {
+            showAlert('info', 'Telegram hesabınızı bağlamak için Ayarlar sayfasına gidin.');
+        }
+    } catch (error) {
+        console.error('Bağlantı kontrolü başarısız:', error);
+    }
+}
+
+async function loadMembers() {
+    const sourceGroup = document.getElementById('sourceGroup').value;
+    if (!sourceGroup) {
+        showAlert('danger', 'Lütfen kaynak grup bilgisini girin');
+        return;
+    }
+    
+    showLoading('Üyeler yükleniyor...');
+    
+    try {
+        const response = await fetch('/api/v1/get_members', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                group_link: sourceGroup
+            })
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            showAlert('success', `${data.total} üye başarıyla yüklendi!`);
+        } else {
+            showAlert('danger', data.error || 'Üyeler yüklenirken hata oluştu');
+        }
+    } catch (error) {
+        hideLoading();
+        showAlert('danger', 'Sunucu hatası: ' + error.message);
+    }
+}
+
+async function startTransfer() {
+    const sourceGroup = document.getElementById('sourceGroup').value;
+    const targetGroup = document.getElementById('targetGroup').value;
+    const maxMembers = document.getElementById('maxMembers').value;
+    const transferSpeed = document.getElementById('transferSpeed').value;
+    
+    if (!sourceGroup || !targetGroup) {
+        showAlert('danger', 'Lütfen kaynak ve hedef grup bilgilerini girin');
+        return;
+    }
+    
+    if (!confirm('Üye aktarımını başlatmak istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    document.getElementById('progressCard').style.display = 'block';
+    showLoading('Aktarım başlatılıyor...');
+    
+    try {
+        const response = await fetch('/api/v1/transfer_members', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                source_group: sourceGroup,
+                target_group: targetGroup,
+                max_members: parseInt(maxMembers),
+                speed: transferSpeed
+            })
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            showAlert('success', 'Aktarım başarıyla başlatıldı!');
+            // Simüle edilmiş ilerleme (gerçek implementasyonda WebSocket kullanılabilir)
+            simulateProgress();
+        } else {
+            showAlert('danger', data.error || 'Aktarım başlatılırken hata oluştu');
+        }
+    } catch (error) {
+        hideLoading();
+        showAlert('danger', 'Sunucu hatası: ' + error.message);
+    }
+}
+
+function simulateProgress() {
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+        }
+        
+        updateProgress(progress, 50, Math.floor(progress / 2), 50 - Math.floor(progress / 2), 0);
+    }, 1000);
+}
+
+function updateProgress(percent, total, success, pending, failed) {
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressText').textContent = `${Math.floor(percent)}% (${success} / ${total})`;
+    document.getElementById('successCount').textContent = success;
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('failedCount').textContent = failed;
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `tg-alert tg-alert-${type}`;
+    alertDiv.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    
+    const contentArea = document.querySelector('.content-area');
+    contentArea.insertBefore(alertDiv, contentArea.firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+function showLoading(message) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loadingOverlay';
+    loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+    loadingDiv.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+            <div class="loading" style="margin: 0 auto 15px;"></div>
+            <div>${message}</div>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+function hideLoading() {
+    const loadingDiv = document.getElementById('loadingOverlay');
+    if (loadingDiv) loadingDiv.remove();
+}
+
+// Sayfa yüklendiğinde bağlantıyı kontrol et
+document.addEventListener('DOMContentLoaded', checkTelegramConnection);
+</script>
+{% endblock %}

@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Telegram Premium Panel{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #00d4aa;
+            --warning-color: #ff9500;
+            --danger-color: #ff6b6b;
+            --dark-color: #2d3748;
+            --light-color: #f7fafc;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            --gradient-warning: linear-gradient(135deg, #ff9500 0%, #ff7675 100%);
+            --gradient-info: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--gradient-primary);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.95) !important;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            margin-top: 90px;
+            padding: 2rem 0;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+            pointer-events: none;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card.bg-success {
+            background: var(--gradient-success);
+        }
+
+        .stat-card.bg-warning {
+            background: var(--gradient-warning);
+        }
+
+        .stat-card.bg-info {
+            background: var(--gradient-info);
+        }
+
+        .stat-card h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stat-card p {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .stat-card small {
+            opacity: 0.8;
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.875rem;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--gradient-warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff7675);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--gradient-info);
+            color: white;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid rgba(0,0,0,0.1);
+            padding: 1rem 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background-color: var(--light-color);
+            border: none;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .table td {
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .badge {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 10px;
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            border-left-color: #17a2b8;
+            background-color: rgba(23, 162, 184, 0.1);
+        }
+
+        .alert-warning {
+            border-left-color: var(--warning-color);
+            background-color: rgba(243, 156, 18, 0.1);
+        }
+
+        .alert-danger {
+            border-left-color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .alert-success {
+            border-left-color: var(--success-color);
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 3rem;
+            border-radius: 0 0 30px 30px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            height: 100%;
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .pricing-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card.featured {
+            border: 3px solid var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .pricing-card .badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .step {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card h3 {
+                font-size: 2rem;
+            }
+            
+            .hero-section {
+                padding: 2rem 0;
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+                margin-top: 1rem;
+            }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            padding: 20px;
+        }
+
+
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar .nav-link {
+            color: var(--dark-color);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+        }
+
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+        }
+
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+
+        .progress {
+            height: 10px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            border-radius: 10px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .subscription-card {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .subscription-card:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-5px);
+        }
+
+        .subscription-card.featured {
+            border-color: var(--warning-color);
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.1), rgba(230, 126, 34, 0.1));
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li i {
+            color: var(--success-color);
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-top: 70px;
+                padding: 10px 0;
+            }
+            
+            .stat-card h3 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fab fa-telegram-plane me-2"></i>
+                Telegram Premium Panel
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('campaigns') }}">
+                            <i class="fas fa-bullhorn me-1"></i>Kampanyalar
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('credits') }}">
+                            <i class="fas fa-coins me-1"></i>Kredi Yönetimi
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="telegramDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fab fa-telegram-plane me-1"></i>Telegram
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/telegram/transfer">
+                                <i class="fas fa-exchange-alt me-2"></i>Kanal Üye Çekme
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/telegram/sessions">
+                                <i class="fas fa-key me-2"></i>Oturum Yönetimi
+                            </a></li>
+                            <li><a class="dropdown-item" href="/telegram/groups">
+                                <i class="fas fa-users me-2"></i>Grup Yönetimi
+                            </a></li>
+                            <li><a class="dropdown-item" href="/telegram/campaigns">
+                                <i class="fas fa-rocket me-2"></i>Kampanya Yönetimi
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('telegram_settings') }}">
+                                <i class="fas fa-cog me-2"></i>Telegram Ayarları
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% if current_user.subscription_type in ['premium', 'enterprise'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('analytics') }}">
+                            <i class="fas fa-chart-line me-1"></i>Analitik
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('api_management') }}">
+                            <i class="fas fa-code me-1"></i>API
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_credits') }}">
+                            <i class="fas fa-user-shield me-1"></i>Admin Kredi
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                            <span class="badge bg-{{ 'warning' if current_user.subscription_type == 'free' else 'success' }} ms-2">
+                                {{ current_user.subscription_type.title() }}
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('subscription') }}">
+                                <i class="fas fa-crown me-2"></i>Abonelik
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Çıkış
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Giriş
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Kayıt
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container main-content">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' if category == 'info' else 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-5">
+        <div class="container">
+            <p class="text-white-50 mb-0">
+                © 2024 Telegram Premium Panel. Tüm hakları saklıdır.
+                <br>
+                <small>Güvenli ve etik kullanım için tasarlanmıştır.</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Real-time stats update
+        function updateStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Update dashboard stats if elements exist
+                    const dailyInvites = document.getElementById('daily-invites');
+                    const totalInvites = document.getElementById('total-invites');
+                    const successRate = document.getElementById('success-rate');
+                    
+                    if (dailyInvites) dailyInvites.textContent = data.daily_invites_used;
+                    if (totalInvites) totalInvites.textContent = data.total_invites;
+                    if (successRate) successRate.textContent = data.success_rate + '%';
+                })
+                .catch(error => console.log('Stats update error:', error));
+        }
+
+        // Update stats every 30 seconds
+        if (document.getElementById('dashboard-stats')) {
+            updateStats();
+            setInterval(updateStats, 30000);
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                if (href && href !== '#') {
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                if (alert.classList.contains('show')) {
+                    alert.classList.remove('show');
+                    setTimeout(() => alert.remove(), 150);
+                }
+            });
+        }, 5000);
+
+        // Global Error Handling System
+        window.ErrorHandler = {
+            // Show user-friendly error messages
+            showError: function(message, type = 'error', duration = 5000) {
+                const alertContainer = document.getElementById('alert-container') || this.createAlertContainer();
+                const alertId = 'alert-' + Date.now();
+                
+                const alertHTML = `
+                    <div id="${alertId}" class="alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+                        <strong>${type === 'error' ? 'Hata!' : type === 'success' ? 'Başarılı!' : 'Bilgi:'}</strong> ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+                
+                // Auto-hide after duration
+                if (duration > 0) {
+                    setTimeout(() => {
+                        const alert = document.getElementById(alertId);
+                        if (alert) {
+                            alert.classList.remove('show');
+                            setTimeout(() => alert.remove(), 150);
+                        }
+                    }, duration);
+                }
+            },
+
+            createAlertContainer: function() {
+                let container = document.getElementById('alert-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'alert-container';
+                    container.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9999; max-width: 400px;';
+                    document.body.appendChild(container);
+                }
+                return container;
+            },
+
+            // Handle API errors
+            handleApiError: function(error, context = '') {
+                console.error('API Error:', error, 'Context:', context);
+                
+                let message = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+                
+                if (error.response) {
+                    // Server responded with error status
+                    const status = error.response.status;
+                    const data = error.response.data;
+                    
+                    switch (status) {
+                        case 400:
+                            message = data?.message || 'Geçersiz istek. Lütfen girdiğiniz bilgileri kontrol edin.';
+                            break;
+                        case 401:
+                            message = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
+                            setTimeout(() => window.location.href = '/login', 2000);
+                            break;
+                        case 403:
+                            message = 'Bu işlem için yetkiniz bulunmuyor.';
+                            break;
+                        case 404:
+                            message = 'İstenen kaynak bulunamadı.';
+                            break;
+                        case 429:
+                            message = 'Çok fazla istek gönderdiniz. Lütfen biraz bekleyin.';
+                            break;
+                        case 500:
+                            message = 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.';
+                            break;
+                        default:
+                            message = data?.message || `Sunucu hatası (${status}). Lütfen tekrar deneyin.`;
+                    }
+                } else if (error.request) {
+                    // Network error
+                    message = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+                } else {
+                    // Other error
+                    message = error.message || 'Bilinmeyen hata oluştu.';
+                }
+                
+                this.showError(message);
+                return message;
+            },
+
+            // Enhanced fetch wrapper with error handling
+            fetch: async function(url, options = {}) {
+                try {
+                    // Get JWT token from localStorage or sessionStorage
+                    const jwtToken = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+                    
+                    // Add default headers including JWT token (if available)
+                    const defaultOptions = {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` }),
+                            ...options.headers
+                        },
+                        credentials: 'include', // Include cookies for session-based auth
+                        ...options
+                    };
+
+                    const response = await window.originalFetch(url, defaultOptions);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        // Create a mock response object for error cases
+                        const errorResponse = {
+                            ok: false,
+                            status: response.status,
+                            json: async () => ({ success: false, message: errorData.message || 'API Error', error: errorData })
+                        };
+                        this.handleApiError({
+                            response: {
+                                status: response.status,
+                                data: errorData
+                            }
+                        }, `Fetch: ${url}`);
+                        return errorResponse;
+                    }
+                    
+                    // Return raw response so existing code can call .json()
+                    return response;
+                } catch (error) {
+                    // Create a mock response for network errors
+                    const networkErrorResponse = {
+                        ok: false,
+                        status: 0,
+                        json: async () => ({ success: false, message: 'Network Error', error: error.message })
+                    };
+                    this.handleApiError(error, `Fetch: ${url}`);
+                    return networkErrorResponse;
+                }
+            }
+        };
+
+        // Global error handlers
+        window.addEventListener('error', function(event) {
+            console.error('Global Error:', event.error);
+            ErrorHandler.showError('Sayfa yüklenirken bir hata oluştu. Sayfayı yenileyin.');
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled Promise Rejection:', event.reason);
+            ErrorHandler.handleApiError(event.reason, 'Promise Rejection');
+        });
+
+        // Replace default fetch with enhanced version
+        window.originalFetch = window.fetch;
+        window.fetch = ErrorHandler.fetch.bind(ErrorHandler);
+    </script>
+    
+    <!-- Yasal Uyarı Modal -->
+    <div class="modal fade" id="legalWarningModal" tabindex="-1" aria-labelledby="legalWarningModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h4 class="modal-title" id="legalWarningModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>KRİTİK YASAL UYARI VE GÜVENLİK BİLDİRİMİ
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <!-- Kritik Uyarı Banner -->
+                    <div class="alert alert-danger border-0 shadow-lg mb-4" style="background: linear-gradient(135deg, #dc3545, #c82333); border-radius: 15px;">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <i class="fas fa-shield-alt fa-3x text-white"></i>
+                            </div>
+                            <div class="col">
+                                <h5 class="text-white mb-2">
+                                    <i class="fas fa-gavel me-2"></i>YASAL SORUMLULUK VE UYARI
+                                </h5>
+                                <p class="text-white mb-0">
+                                    Bu sistem sadece yasal ve etik amaçlar için kullanılmalıdır. Yasa dışı faaliyetlerde kullanımı kesinlikle yasaktır.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yasak Kullanım Alanları -->
+                    <div class="alert alert-warning border-0 mb-4" style="background: rgba(255, 193, 7, 0.1); border-radius: 15px;">
+                        <h5 class="text-warning">
+                            <i class="fas fa-times-circle me-2"></i>Bu sistem aşağıdaki amaçlar için kullanılamaz:
+                        </h5>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Bahis siteleri ve kumar faaliyetleri</li>
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Dolandırıcılık ve sahte promosyonlar</li>
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Spam ve istenmeyen mesaj gönderimi</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Kişisel verilerin izinsiz toplanması</li>
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Terör örgütleri ve illegal gruplar</li>
+                                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Nefret söylemi ve ayrımcılık</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kanun Maddeleri -->
+                    <div class="card border-danger mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>İlgili Kanun Maddeleri</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="article-category mb-3">
+                                        <h6 class="text-danger">🎰 Bahis ve Kumar Suçları</h6>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 228:</strong>
+                                            <span>Şans oyunları oynatan kişi 2-5 yıl hapis cezası</span>
+                                        </div>
+                                        <div class="law-article">
+                                            <strong>5326 Sayılı Kabahatler Kanunu:</strong>
+                                            <span>Yasadışı bahis faaliyetleri - İdari para cezası</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="article-category mb-3">
+                                        <h6 class="text-danger">💻 Bilişim Suçları</h6>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 244:</strong>
+                                            <span>Bilişim sistemine girme - 1-3 yıl hapis</span>
+                                        </div>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 245:</strong>
+                                            <span>Sistemi engelleme, bozma - 2-6 yıl hapis</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="article-category mb-3">
+                                        <h6 class="text-danger">🔒 Kişisel Veri ve Gizlilik</h6>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 135:</strong>
+                                            <span>Kişisel verileri hukuka aykırı işleme - 2-4 yıl hapis</span>
+                                        </div>
+                                        <div class="law-article">
+                                            <strong>KVKK Madde 18:</strong>
+                                            <span>Kişisel veri ihlali - 5.000-1.000.000 TL ceza</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="article-category mb-3">
+                                        <h6 class="text-danger">📧 İletişim Suçları</h6>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 125:</strong>
+                                            <span>Hakaret - 3 ay-2 yıl hapis</span>
+                                        </div>
+                                        <div class="law-article">
+                                            <strong>TCK Madde 106:</strong>
+                                            <span>Tehdit - 6 ay-2 yıl hapis</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kullanıcı Taahhütleri -->
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Kullanıcı Taahhütleri</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalCheck1" required>
+                                <label class="form-check-label fw-bold" for="legalCheck1">
+                                    Bu sistemi sadece yasal ve etik amaçlar için kullanacağımı taahhüt ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalCheck2" required>
+                                <label class="form-check-label fw-bold" for="legalCheck2">
+                                    Bahis, kumar, dolandırıcılık gibi yasa dışı faaliyetlerde kullanmayacağımı kabul ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalCheck3" required>
+                                <label class="form-check-label fw-bold" for="legalCheck3">
+                                    Kişisel verileri koruyacağımı ve KVKK'ya uygun davranacağımı beyan ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalCheck4" required>
+                                <label class="form-check-label fw-bold" for="legalCheck4">
+                                    Tüm yasal sorumluluğun bana ait olduğunu kabul ediyorum.
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="rejectLegalTerms">
+                        <i class="fas fa-times me-2"></i>Kabul Etmiyorum
+                    </button>
+                    <button type="button" class="btn btn-success" id="acceptLegalTerms" disabled>
+                        <i class="fas fa-check me-2"></i>Kabul Ediyorum
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .article-category {
+        background: rgba(220, 53, 69, 0.05);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    .article-category h6 {
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .law-article {
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 5px;
+        border-left: 3px solid #dc3545;
+        margin-bottom: 8px;
+    }
+
+    .law-article strong {
+        color: #dc3545;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .law-article span {
+        color: #495057;
+        line-height: 1.4;
+        font-size: 0.9em;
+    }
+
+    .alert-danger {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const legalModal = new bootstrap.Modal(document.getElementById('legalWarningModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        const checkboxes = document.querySelectorAll('#legalWarningModal input[type="checkbox"]');
+        const acceptButton = document.getElementById('acceptLegalTerms');
+        const rejectButton = document.getElementById('rejectLegalTerms');
+
+        // Check if user has already accepted legal terms
+        const hasAcceptedLegal = localStorage.getItem('legalTermsAccepted');
+        if (!hasAcceptedLegal) {
+            legalModal.show();
+        }
+
+        // Monitor checkbox changes
+        function checkAllBoxes() {
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            acceptButton.disabled = !allChecked;
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', checkAllBoxes);
+        });
+
+        // Handle reject button
+        rejectButton.addEventListener('click', function() {
+            window.location.href = '/logout';
+        });
+
+        // Handle accept button
+        acceptButton.addEventListener('click', function() {
+            // Save acceptance to localStorage and server
+            localStorage.setItem('legalTermsAccepted', 'true');
+            
+            // Get JWT token from localStorage or session
+            const jwtToken = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token') || '';
+            
+            window.ErrorHandler.fetch('/api/legal/accept', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${jwtToken}`
+                },
+                body: JSON.stringify({
+                    accepted: true,
+                    timestamp: new Date().toISOString()
+                })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    legalModal.hide();
+                    window.ErrorHandler.showError('Yasal şartlar başarıyla kabul edildi.', 'success', 3000);
+                    
+                    // Refresh the page to ensure all components load properly
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    window.ErrorHandler.showError(data.error || 'Yasal şartlar kaydedilirken hata oluştu.', 'error');
+                }
+            }).catch(error => {
+                console.error('Legal acceptance error:', error);
+                window.ErrorHandler.handleApiError(error, 'Yasal şartlar kaydedilirken');
+            });
+        });
+    });
+
+    // JWT Token Yenileme Mekanizması
+    function initTokenRefresh() {
+        const jwtToken = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+        
+        if (!jwtToken) {
+            return; // Token yoksa yenileme yapma
+        }
+
+        // Token'ı decode et ve süresini kontrol et
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function refreshToken() {
+            const currentToken = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+            
+            if (!currentToken) {
+                return;
+            }
+
+            fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.token) {
+                    // Yeni token'ı kaydet
+                    if (localStorage.getItem('jwt_token')) {
+                        localStorage.setItem('jwt_token', data.token);
+                    }
+                    if (sessionStorage.getItem('jwt_token')) {
+                        sessionStorage.setItem('jwt_token', data.token);
+                    }
+                    console.log('JWT token başarıyla yenilendi');
+                } else {
+                    console.error('Token yenileme hatası:', data.error);
+                    // Token yenilenemezse login sayfasına yönlendir
+                    if (data.error && data.error.includes('bulunamadı')) {
+                        window.location.href = '/login';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Token yenileme isteği hatası:', error);
+            });
+        }
+
+        // Token süresini kontrol et ve gerekirse yenile
+        function checkTokenExpiry() {
+            const currentToken = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+            
+            if (!currentToken) {
+                return;
+            }
+
+            const tokenData = parseJwt(currentToken);
+            if (!tokenData || !tokenData.exp) {
+                return;
+            }
+
+            const currentTime = Math.floor(Date.now() / 1000);
+            const timeUntilExpiry = tokenData.exp - currentTime;
+
+            // Token 30 dakika içinde sona erecekse yenile
+            if (timeUntilExpiry < 1800) { // 30 dakika = 1800 saniye
+                refreshToken();
+            }
+        }
+
+        // Sayfa yüklendiğinde token kontrolü yap
+        checkTokenExpiry();
+
+        // Her 15 dakikada bir token kontrolü yap
+        setInterval(checkTokenExpiry, 15 * 60 * 1000); // 15 dakika
+    }
+
+    // Token yenileme mekanizmasını başlat
+    document.addEventListener('DOMContentLoaded', function() {
+        initTokenRefresh();
+    });
+    </script>
+
+    <script>
+        // Fonksiyon: JWT'yi ayrıştırır ve payload'u döner
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Fonksiyon: Access token'ın süresinin dolup dolmadığını kontrol eder
+        function isTokenExpired(token) {
+            if (!token) return true;
+            const payload = parseJwt(token);
+            if (!payload || !payload.exp) return true;
+            const now = Math.round(Date.now() / 1000);
+            // Token'ın süresinin dolmasına 30 saniyeden az kaldıysa yenile
+            return payload.exp - 30 < now;
+        }
+
+        // Orijinal fetch fonksiyonunu sakla
+        const originalFetch = window.fetch;
+
+        // Fonksiyon: Refresh token kullanarak yeni bir access token alır
+        async function refreshToken() {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                console.log("Refresh token bulunamadı. Oturum sonlandırılıyor.");
+                logout();
+                return null;
+            }
+
+            try {
+                // Orijinal fetch'i kullanarak token yenileme döngüsünü kır
+                const response = await originalFetch('/api/auth/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${refreshToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('accessToken', data.access_token);
+                    console.log("Access token başarıyla yenilendi.");
+                    return data.access_token;
+                } else {
+                    console.error("Token yenileme başarısız. Oturum sonlandırılıyor.");
+                    logout(); // Refresh token geçersizse çıkış yap
+                    return null;
+                }
+            } catch (error) {
+                console.error("Token yenileme sırasında ağ hatası:", error);
+                return null;
+            }
+        }
+
+        // Fonksiyon: Geçerli bir access token döndürür (gerekirse yeniler)
+        async function getValidAccessToken() {
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (isTokenExpired(accessToken)) {
+                console.log("Access token süresi dolmuş veya yok. Yenileniyor...");
+                accessToken = await refreshToken();
+            }
+            
+            return accessToken;
+        }
+
+        // Fonksiyon: Kullanıcıyı sistemden çıkarır ve giriş sayfasına yönlendirir
+        function logout() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = "{{ url_for('login') }}?session_expired=true";
+        }
+
+        // Global fetch'i sarmalayarak API isteklerine otomatik token ekleme
+        window.fetch = async function(...args) {
+            let [resource, config] = args;
+            
+            const isApiRequest = (typeof resource === 'string' && resource.startsWith('/api/')) ||
+                                 (resource instanceof Request && resource.url.includes(window.location.origin) && resource.url.includes('/api/'));
+            
+            // auth/refresh ve auth/login istekleri için orjinal fetch'i kullan, sonsuz döngüyü engelle
+            if (typeof resource === 'string' && (resource.includes('/api/auth/refresh') || resource.includes('/api/auth/login'))) {
+                 return originalFetch(resource, config);
+            }
+
+            if (isApiRequest) {
+                const token = await getValidAccessToken();
+                if (token) {
+                    config = config || {};
+                    config.headers = config.headers || {};
+                    config.headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    console.log("Geçerli token alınamadı, API isteği iptal edildi.");
+                    return Promise.reject(new Error("Authentication token not available."));
+                }
+            }
+
+            return originalFetch(resource, config);
+        };
+
+        // Periyodik token kontrolü
+        function initTokenRefresh() {
+            setInterval(async () => {
+                // Sadece sekmeye odaklanıldığında kontrol et
+                if (document.hasFocus()) {
+                    console.log("Periyodik token kontrolü yapılıyor...");
+                    await getValidAccessToken();
+                }
+            }, 5 * 60 * 1000); // Her 5 dakikada bir
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            {% if current_user.is_authenticated %}
+            initTokenRefresh();
+            {% endif %}
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

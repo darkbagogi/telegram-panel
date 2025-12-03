@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Yasal Uyarı ve Güvenlik Bildirimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Kritik Uyarı Banner -->
+    <div class="alert alert-danger border-0 shadow-lg mb-4" style="background: linear-gradient(135deg, #dc3545, #c82333); border-radius: 15px;">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <i class="fas fa-exclamation-triangle fa-3x text-white"></i>
+            </div>
+            <div class="col">
+                <h4 class="alert-heading text-white mb-2">
+                    <i class="fas fa-shield-alt me-2"></i>KRİTİK YASAL UYARI
+                </h4>
+                <p class="text-white mb-0 fs-5">
+                    Bu sistem sadece yasal ve etik amaçlar için kullanılmalıdır. Yasa dışı faaliyetlerde kullanımı kesinlikle yasaktır.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Ana Uyarı Kartı -->
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95);">
+                <div class="card-header bg-danger text-white" style="border-radius: 20px 20px 0 0;">
+                    <h3 class="mb-0">
+                        <i class="fas fa-gavel me-2"></i>YASAL SORUMLULUK VE UYARI
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning border-0 mb-4" style="background: rgba(255, 193, 7, 0.1); border-radius: 15px;">
+                        <h5 class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>DİKKAT: Bu sistem aşağıdaki amaçlar için kullanılamaz:
+                        </h5>
+                        <ul class="list-unstyled mt-3 mb-0">
+                            <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Bahis siteleri ve kumar faaliyetleri</li>
+                            <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Dolandırıcılık ve sahte promosyonlar</li>
+                            <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Spam ve istenmeyen mesaj gönderimi</li>
+                            <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Kişisel verilerin izinsiz toplanması</li>
+                            <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Terör örgütleri ve illegal gruplar</li>
+                            <li class="mb-0"><i class="fas fa-times-circle text-danger me-2"></i>Nefret söylemi ve ayrımcılık</li>
+                        </ul>
+                    </div>
+
+                    <!-- TCK Maddeleri -->
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card border-danger h-100">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>⚖️ İlgili Kanun Maddeleri</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">🎰 Bahis ve Kumar Suçları</h6>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 228:</strong>
+                                                    <span class="small">Şans oyunları oynatan kişi 2-5 yıl hapis cezası</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>5326 Sayılı Kabahatler Kanunu:</strong>
+                                                    <span class="small">Yasadışı bahis faaliyetleri - İdari para cezası</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">💻 Bilişim Suçları</h6>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 244:</strong>
+                                                    <span class="small">Bilişim sistemine girme - 1-3 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 245:</strong>
+                                                    <span class="small">Sistemi engelleme, bozma - 2-6 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 243:</strong>
+                                                    <span class="small">Bilişim sistemini kullanarak dolandırıcılık</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">🔒 Kişisel Veri ve Gizlilik</h6>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 135:</strong>
+                                                    <span class="small">Kişisel verileri hukuka aykırı işleme - 2-4 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 136:</strong>
+                                                    <span class="small">Verileri hukuka aykırı verme veya ele geçirme</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>KVKK Madde 18:</strong>
+                                                    <span class="small">Kişisel veri ihlali - 5.000-1.000.000 TL ceza</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">📢 Spam ve Reklam Suçları</h6>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 157:</strong>
+                                                    <span class="small">Dolandırıcılık - 1-5 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>6563 Sayılı Kanun:</strong>
+                                                    <span class="small">Ticari elektronik ileti - 100.000 TL ceza</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">🚫 Terör ve Örgüt Suçları</h6>
+                                                <div class="mb-2">
+                                                    <strong>TMK Madde 7/2:</strong>
+                                                    <span class="small">Terör örgütü propagandası - 1-3 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 220:</strong>
+                                                    <span class="small">Örgüt kurma ve yönetme - 5-12 yıl hapis</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="article-category mb-4">
+                                                <h6 class="text-danger">⚠️ Diğer İlgili Suçlar</h6>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 142:</strong>
+                                                    <span class="small">Kumar oynatma - 2-5 yıl hapis</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>TCK Madde 216:</strong>
+                                                    <span class="small">Halkı kin ve düşmanlığa tahrik - 1-3 yıl hapis</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Güvenli Kullanım -->
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>✅ Güvenli ve Yasal Kullanım Alanları</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Araştırma Amaçlı</h6>
+                                                <p class="small">Akademik ve bilimsel araştırmalar için kullanım.</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Güvenlik Testi</h6>
+                                                <p class="small">Siber güvenlik ve savunma geliştirme amaçlı.</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Eğitim Amaçlı</h6>
+                                                <p class="small">Teknik eğitim ve öğrenme süreçleri için.</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Yasal İş Süreçleri</h6>
+                                                <p class="small">Meşru ticari faaliyetler ve pazarlama.</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Kişisel Projeler</h6>
+                                                <p class="small">Yasal çerçevede kişisel geliştirme projeleri.</p>
+                                            </div>
+                                            <div class="mb-0">
+                                                <h6 class="text-success"><i class="fas fa-check-circle me-2"></i>Teknoloji Geliştirme</h6>
+                                                <p class="small">Yasal yazılım ve teknoloji geliştirme süreçleri.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kullanıcı Taahhütü -->
+                    <div class="card border-primary mt-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-handshake me-2"></i>Kullanıcı Taahhütü</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalAgreement1" required>
+                                <label class="form-check-label" for="legalAgreement1">
+                                    Bu sistemi sadece yasal amaçlar için kullanacağımı taahhüt ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalAgreement2" required>
+                                <label class="form-check-label" for="legalAgreement2">
+                                    Bahis, kumar ve yasa dışı faaliyetlerde kullanmayacağımı kabul ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="legalAgreement3" required>
+                                <label class="form-check-label" for="legalAgreement3">
+                                    Kişisel verileri koruyacağımı ve KVKK'ya uyacağımı beyan ediyorum.
+                                </label>
+                            </div>
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="legalAgreement4" required>
+                                <label class="form-check-label" for="legalAgreement4">
+                                    Yasal sorumlulukların tamamen bana ait olduğunu kabul ediyorum.
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-success btn-lg" id="acceptTerms" disabled>
+                                    <i class="fas fa-check me-2"></i>Taahhütleri Kabul Et ve Devam Et
+                                </button>
+                                <button type="button" class="btn btn-danger" id="rejectTerms" data-redirect-url="{{ url_for('dashboard') }}">
+                                    <i class="fas fa-times me-2"></i>Kabul Etmiyorum - Ana Sayfaya Dön
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- İletişim Bilgileri -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow" style="border-radius: 15px; background: rgba(255, 255, 255, 0.9);">
+                <div class="card-body text-center p-4">
+                    <h5 class="text-muted mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Yasal Danışmanlık ve Destek
+                    </h5>
+                    <p class="text-muted mb-0">
+                        Yasal konularda şüpheleriniz varsa, lütfen bir hukuk müşaviri ile görüşün.
+                        Bu sistem sadece teknik bir araçtır ve yasal tavsiye vermez.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const acceptButton = document.getElementById('acceptTerms');
+    const rejectButton = document.getElementById('rejectTerms');
+    
+    // Handle reject button click
+    rejectButton.addEventListener('click', function() {
+        const redirectUrl = this.getAttribute('data-redirect-url');
+        window.location.href = redirectUrl;
+    });
+    
+    function checkAllBoxes() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        acceptButton.disabled = !allChecked;
+        
+        if (allChecked) {
+            acceptButton.classList.remove('btn-secondary');
+            acceptButton.classList.add('btn-success');
+        } else {
+            acceptButton.classList.remove('btn-success');
+            acceptButton.classList.add('btn-secondary');
+        }
+    }
+    
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', checkAllBoxes);
+    });
+    
+    acceptButton.addEventListener('click', function() {
+        if (!acceptButton.disabled) {
+            // Loading durumu
+            acceptButton.disabled = true;
+            acceptButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Kaydediliyor...';
+            
+            // API'ye taahhütleri gönder
+            fetch('/api/accept-legal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify({
+                    agreements: ['legal', 'gambling', 'privacy', 'responsibility']
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Başarı mesajı göster
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Taahhütler Kabul Edildi',
+                        text: 'Yasal taahhütleriniz kaydedildi. Sistemi sorumlu bir şekilde kullanın.',
+                        confirmButtonText: 'Anladım'
+                    }).then(() => {
+                        window.location.href = '{{ url_for("dashboard") }}';
+                    });
+                } else {
+                    throw new Error(data.error || 'Bilinmeyen hata');
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Taahhütler kaydedilirken hata oluştu: ' + error.message
+                });
+                
+                // Button'u tekrar aktif et
+                acceptButton.disabled = false;
+                acceptButton.innerHTML = '<i class="fas fa-check me-2"></i>Taahhütleri Kabul Et ve Devam Et';
+            });
+        }
+    });
+    
+    // Sayfa yüklendiğinde uyarı göster
+    Swal.fire({
+        icon: 'warning',
+        title: '⚠️ ÖNEMLİ YASAL UYARI ⚠️',
+        html: `
+            <div class="text-start">
+                <p class="mb-2"><strong>Bu sistem aşağıdaki durumlarda kullanılamaz:</strong></p>
+                <ul class="text-danger">
+                    <li>Bahis siteleri ve kumar faaliyetleri</li>
+                    <li>Dolandırıcılık ve sahte promosyonlar</li>
+                    <li>Spam ve istenmeyen mesaj gönderimi</li>
+                    <li>Yasa dışı grup ve kanal faaliyetleri</li>
+                </ul>
+                <p class="text-warning"><strong>TCK ve KVKK ihlalleri cezai sorumluluk doğurur!</strong></p>
+            </div>
+        `,
+        confirmButtonText: 'Okudum ve Anladım',
+        confirmButtonColor: '#dc3545',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    });
+});
+</script>
+
+<style>
+.alert-danger {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.article-category {
+    background: rgba(220, 53, 69, 0.05);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.article-category h6 {
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid rgba(220, 53, 69, 0.3);
+}
+
+.article-category .mb-2 {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    border-left: 3px solid #dc3545;
+    margin-bottom: 8px;
+}
+
+.article-category strong {
+    color: #dc3545;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.article-category .small {
+    color: #495057;
+    line-height: 1.4;
+}
+</style>
+{% endblock %}

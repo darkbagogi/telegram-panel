@@ -1,0 +1,136 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Gizli Üye Keşfi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-secret"></i> Gizli Üye Keşfi
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Bu özellik, gruplardaki gizli üyeleri ortaya çıkarır. 
+                        Grup yöneticileri tarafından gizlenmiş üyeleri görebilirsiniz.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Grup Linki veya ID</label>
+                                <input type="text" class="form-control" id="groupLink" 
+                                       placeholder="@grupadi veya https://t.me/grupadi">
+                            </div>
+                            
+                            <button class="btn btn-info" id="revealBtn">
+                                <i class="fas fa-search"></i> Gizli Üyeleri Bul
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div id="statsCard" class="card d-none">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">İstatistikler</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="statsContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div id="membersArea" class="d-none">
+                        <h5>Gizli Üyeler</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="membersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Kullanıcı Adı</th>
+                                        <th>Ad Soyad</th>
+                                        <th>Bot</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('revealBtn').addEventListener('click', async function() {
+    const groupLink = document.getElementById('groupLink').value.trim();
+    const btn = this;
+    
+    if (!groupLink) {
+        alert('Lütfen grup linki girin');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aranıyor...';
+    
+    document.getElementById('statsCard').classList.add('d-none');
+    document.getElementById('membersArea').classList.add('d-none');
+    
+    try {
+        const response = await fetch('/api/v1/reveal_hidden', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({group_link: groupLink})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // İstatistikleri göster
+            document.getElementById('statsContent').innerHTML = `
+                <table class="table table-sm">
+                    <tr><th>Grup:</th><td>${data.group_name}</td></tr>
+                    <tr><th>Görünür Üye:</th><td>${data.visible_count}</td></tr>
+                    <tr><th>Gizli Üye:</th><td>${data.hidden_count}</td></tr>
+                    <tr><th>Toplam:</th><td>${data.total_count}</td></tr>
+                </table>
+            `;
+            document.getElementById('statsCard').classList.remove('d-none');
+            
+            // Gizli üyeleri listele
+            if (data.hidden_members && data.hidden_members.length > 0) {
+                const tbody = document.getElementById('membersBody');
+                tbody.innerHTML = '';
+                
+                data.hidden_members.forEach(member => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${member.id}</td>
+                        <td>${member.username || '-'}</td>
+                        <td>${member.first_name || ''} ${member.last_name || ''}</td>
+                        <td>${member.is_bot ? '<span class="badge bg-warning">Bot</span>' : '-'}</td>
+                    `;
+                });
+                
+                document.getElementById('membersArea').classList.remove('d-none');
+            }
+        } else {
+            alert('Hata: ' + data.error);
+        }
+    } catch (error) {
+        alert('Hata: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Gizli Üyeleri Bul';
+    }
+});
+</script>
+{% endblock %}

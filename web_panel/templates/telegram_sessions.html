@@ -1,0 +1,1064 @@
+{% extends "base.html" %}
+
+{% block title %}Telegram Oturum Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section with Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2 class="mb-2">
+                                <i class="fas fa-telegram-plane text-primary me-2"></i>
+                                Telegram Oturum Yönetimi
+                            </h2>
+                            <p class="text-muted mb-0">
+                                Telegram hesaplarınızı güvenli şekilde yönetin ve kampanyalarınızda kullanın
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addSessionModal">
+                                <i class="fas fa-plus me-2"></i>Yeni Oturum Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-gradient-primary">
+                <div class="card-body text-center text-white">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h4 id="totalSessions">0</h4>
+                    <p class="mb-0">Toplam Oturum</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-gradient-success">
+                <div class="card-body text-center text-white">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h4 id="activeSessions">0</h4>
+                    <p class="mb-0">Aktif Oturum</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-gradient-warning">
+                <div class="card-body text-center text-white">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h4 id="pendingSessions">0</h4>
+                    <p class="mb-0">Bekleyen Oturum</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-gradient-info">
+                <div class="card-body text-center text-white">
+                    <i class="fas fa-chart-line fa-2x mb-2"></i>
+                    <h4 id="usageToday">0</h4>
+                    <p class="mb-0">Bugün Kullanım</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <select class="form-select" id="statusFilter" onchange="filterSessions()">
+                                    <option value="">Tüm Oturumlar</option>
+                                    <option value="active">Aktif Oturumlar</option>
+                                    <option value="pending">Bekleyen Oturumlar</option>
+                                    <option value="inactive">Pasif Oturumlar</option>
+                                </select>
+                                <button class="btn btn-outline-primary" onclick="refreshSessions()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-success" onclick="verifyAllSessions()">
+                                    <i class="fas fa-shield-alt me-2"></i>Tümünü Doğrula
+                                </button>
+                                <button class="btn btn-outline-info" onclick="testAllSessions()">
+                                    <i class="fas fa-vial me-2"></i>Tümünü Test Et
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="bulkDeleteSessions()">
+                                    <i class="fas fa-trash me-2"></i>Toplu Sil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card glass-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Oturum Listesi
+                    </h5>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        <label class="form-check-label" for="selectAll">Tümünü Seç</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="sessionsContainer">
+                        <!-- Sessions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Session Modal -->
+<div class="modal fade" id="addSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary me-2"></i>
+                    Yeni Telegram Oturumu Ekle
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSessionForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sessionName" class="form-label">Oturum Adı</label>
+                                <input type="text" class="form-control" id="sessionName" required>
+                                <div class="form-text">Oturumunuz için benzersiz bir ad girin</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">Telefon Numarası</label>
+                                <input type="tel" class="form-control" id="phoneNumber" placeholder="+90XXXXXXXXXX" required>
+                                <div class="form-text">Ülke kodu ile birlikte girin</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apiId" class="form-label">API ID</label>
+                                <input type="text" class="form-control" id="apiId" required>
+                                <div class="form-text">Telegram'dan aldığınız API ID</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apiHash" class="form-label">API Hash</label>
+                                <input type="text" class="form-control" id="apiHash" required>
+                                <div class="form-text">Telegram'dan aldığınız API Hash</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Bilgi:</strong> API ID ve Hash'i almak için <a href="https://my.telegram.org" target="_blank">my.telegram.org</a> adresini ziyaret edin.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="addSession()">
+                    <i class="fas fa-save me-2"></i>Oturum Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verify Session Modal -->
+<div class="modal fade" id="verifySessionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-shield-alt text-success me-2"></i>
+                    Oturum Doğrulama
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="verifySessionForm">
+                    <input type="hidden" id="verifySessionId">
+                    <div class="mb-3">
+                        <label for="verificationCode" class="form-label">Doğrulama Kodu</label>
+                        <input type="text" class="form-control" id="verificationCode" placeholder="12345" required>
+                        <div class="form-text">Telegram'dan gelen doğrulama kodunu girin</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-success" onclick="verifySession()">
+                    <i class="fas fa-check me-2"></i>Doğrula
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let jwtToken = localStorage.getItem('jwt_token');
+
+// Load sessions on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSessions();
+});
+
+let allSessions = [];
+let filteredSessions = [];
+
+function loadSessions() {
+    fetch('/api/telegram/sessions', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.sessions) {
+            allSessions = data.sessions;
+            filteredSessions = [...allSessions];
+            updateStatistics();
+            displaySessions(data.sessions);
+        } else {
+            // Fallback to mock data if API fails
+            const mockSessions = [
+                {
+                    id: 1,
+                    session_name: "Ana Hesap",
+                    phone_number: "+90555123456",
+                    is_active: true,
+                    status: "active",
+                    usage_today: 15,
+                    created_at: "2024-01-15T10:30:00Z",
+                    last_used: "2024-01-20T14:22:00Z"
+                },
+                {
+                    id: 2,
+                    session_name: "İş Hesabı", 
+                    phone_number: "+90555234567",
+                    is_active: false,
+                    status: "pending",
+                    usage_today: 0,
+                    created_at: "2024-01-10T09:15:00Z",
+                    last_used: null
+                },
+                {
+                    id: 3,
+                    session_name: "Pazarlama Hesabı",
+                    phone_number: "+90555345678",
+                    is_active: true,
+                    status: "active",
+                    usage_today: 8,
+                    created_at: "2024-01-12T11:45:00Z",
+                    last_used: "2024-01-19T16:30:00Z"
+                },
+                {
+                    id: 4,
+                    session_name: "Yedek Hesap",
+                    phone_number: "+90555456789",
+                    is_active: true,
+                    status: "active",
+                    usage_today: 3,
+                    created_at: "2024-01-08T08:20:00Z",
+                    last_used: "2024-01-18T12:15:00Z"
+                },
+                {
+                    id: 5,
+                    session_name: "Test Hesabı",
+                    phone_number: "+90555567890",
+                    is_active: false,
+                    status: "pending",
+                    usage_today: 0,
+                    created_at: "2024-01-05T14:10:00Z",
+                    last_used: "2024-01-17T09:45:00Z"
+                }
+            ];
+            allSessions = mockSessions;
+            filteredSessions = [...allSessions];
+            updateStatistics();
+            displaySessions(mockSessions);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading sessions:', error);
+        // Show mock data on error
+        const mockSessions = [
+            {
+                id: 1,
+                session_name: "Ana Hesap",
+                phone_number: "+90555123456",
+                is_active: true,
+                status: "active",
+                usage_today: 15,
+                created_at: "2024-01-15T10:30:00Z",
+                last_used: "2024-01-20T14:22:00Z"
+            },
+            {
+                id: 2,
+                session_name: "İş Hesabı",
+                phone_number: "+90555234567",
+                is_active: false,
+                status: "pending",
+                usage_today: 0,
+                created_at: "2024-01-10T09:15:00Z",
+                last_used: null
+            },
+            {
+                id: 3,
+                session_name: "Pazarlama Hesabı",
+                phone_number: "+90555345678",
+                is_active: true,
+                status: "active",
+                usage_today: 8,
+                created_at: "2024-01-12T11:45:00Z",
+                last_used: "2024-01-19T16:30:00Z"
+            },
+            {
+                id: 4,
+                session_name: "Yedek Hesap",
+                phone_number: "+90555456789",
+                is_active: true,
+                status: "active",
+                usage_today: 3,
+                created_at: "2024-01-08T08:20:00Z",
+                last_used: "2024-01-18T12:15:00Z"
+            },
+            {
+                id: 5,
+                session_name: "Test Hesabı",
+                phone_number: "+90555567890",
+                is_active: false,
+                status: "pending",
+                usage_today: 0,
+                created_at: "2024-01-05T14:10:00Z",
+                last_used: "2024-01-17T09:45:00Z"
+            }
+        ];
+        allSessions = mockSessions;
+        filteredSessions = [...allSessions];
+        updateStatistics();
+        displaySessions(mockSessions);
+    });
+}
+
+function updateStatistics() {
+    const total = allSessions.length;
+    const active = allSessions.filter(s => s.status === 'active').length;
+    const pending = allSessions.filter(s => s.status === 'pending').length;
+    const usageToday = allSessions.reduce((sum, s) => sum + (s.usage_today || 0), 0);
+
+    document.getElementById('totalSessions').textContent = total;
+    document.getElementById('activeSessions').textContent = active;
+    document.getElementById('pendingSessions').textContent = pending;
+    document.getElementById('usageToday').textContent = usageToday;
+}
+
+function filterSessions() {
+    const filter = document.getElementById('statusFilter').value;
+    
+    if (filter === '') {
+        filteredSessions = [...allSessions];
+    } else {
+        filteredSessions = allSessions.filter(session => session.status === filter);
+    }
+    
+    displaySessions(filteredSessions);
+}
+
+function refreshSessions() {
+    const refreshBtn = document.querySelector('[onclick="refreshSessions()"]');
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    setTimeout(() => {
+        loadSessions();
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        showAlert('Oturumlar yenilendi', 'success');
+    }, 1000);
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.session-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+function verifyAllSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen doğrulanacak oturumları seçin', 'warning');
+        return;
+    }
+
+    showAlert(`${selectedSessions.length} oturum doğrulanıyor...`, 'info');
+    
+    // Simulate verification process
+    setTimeout(() => {
+        showAlert('Seçilen oturumlar doğrulandı', 'success');
+        loadSessions();
+    }, 2000);
+}
+
+function testAllSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen test edilecek oturumları seçin', 'warning');
+        return;
+    }
+
+    showAlert(`${selectedSessions.length} oturum test ediliyor...`, 'info');
+    
+    // Simulate testing process
+    setTimeout(() => {
+        showAlert('Seçilen oturumlar test edildi', 'success');
+        loadSessions();
+    }, 3000);
+}
+
+function bulkDeleteSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen silinecek oturumları seçin', 'warning');
+        return;
+    }
+
+    if (confirm(`${selectedSessions.length} oturum silinecek. Emin misiniz?`)) {
+        showAlert(`${selectedSessions.length} oturum siliniyor...`, 'info');
+        
+        // Simulate deletion process
+        setTimeout(() => {
+            showAlert('Seçilen oturumlar silindi', 'success');
+            loadSessions();
+        }, 1500);
+    }
+}
+
+function getSelectedSessions() {
+    const checkboxes = document.querySelectorAll('.session-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function displaySessions(sessions) {
+    const container = document.getElementById('sessionsContainer');
+    
+    if (sessions.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-telegram-plane fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Henüz Telegram oturumu eklenmemiş</h5>
+                    <p class="text-muted">Başlamak için yeni bir oturum ekleyin</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = sessions.map(session => `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 session-card" data-session-id="${session.id}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input session-checkbox me-2" value="${session.id}">
+                            <h6 class="card-title mb-0">${session.session_name}</h6>
+                        </div>
+                        <span class="badge ${session.is_active ? 'bg-success' : 'bg-warning'}">
+                            ${session.is_active ? 'Aktif' : 'Beklemede'}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-phone me-1"></i>
+                            ${session.phone_number}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            Oluşturulma: ${new Date(session.created_at).toLocaleDateString('tr-TR')}
+                        </small>
+                    </div>
+                    
+                    ${session.last_used ? `
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                Son kullanım: ${new Date(session.last_used).toLocaleDateString('tr-TR')}
+                            </small>
+                        </div>
+                    ` : ''}
+                    
+                    ${session.usage_today ? `
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-chart-line me-1"></i>
+                                Bugün: ${session.usage_today} kullanım
+                            </small>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="d-flex gap-2 flex-wrap">
+                        ${!session.is_active ? `
+                            <button class="btn btn-sm btn-success" onclick="openVerifyModal(${session.id})">
+                                <i class="fas fa-shield-alt me-1"></i>Doğrula
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-primary" onclick="useSession(${session.id})">
+                                <i class="fas fa-play me-1"></i>Kullan
+                            </button>
+                        `}
+                        <button class="btn btn-sm btn-info test-btn" onclick="testSession(${session.id})">
+                            <i class="fas fa-vial me-1"></i>Test Et
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSession(${session.id})">
+                            <i class="fas fa-trash me-1"></i>Sil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addSession() {
+    const sessionName = document.getElementById('sessionName').value;
+    const phoneNumber = document.getElementById('phoneNumber').value;
+    const apiId = document.getElementById('apiId').value;
+    const apiHash = document.getElementById('apiHash').value;
+    
+    if (!sessionName || !phoneNumber || !apiId || !apiHash) {
+        showAlert('Lütfen tüm alanları doldurun', 'warning');
+        return;
+    }
+    
+    fetch('/api/telegram/sessions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            session_name: sessionName,
+            phone_number: phoneNumber,
+            api_id: apiId,
+            api_hash: apiHash
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert(data.message, 'success');
+            document.getElementById('addSessionForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('addSessionModal')).hide();
+            loadSessions();
+        } else {
+            showAlert(data.error || 'Oturum eklenirken hata oluştu', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding session:', error);
+        showAlert('Oturum eklenirken hata oluştu', 'danger');
+    });
+}
+
+function openVerifyModal(sessionId) {
+    document.getElementById('verifySessionId').value = sessionId;
+    new bootstrap.Modal(document.getElementById('verifySessionModal')).show();
+}
+
+function verifySession() {
+    const sessionId = document.getElementById('verifySessionId').value;
+    const verificationCode = document.getElementById('verificationCode').value;
+    
+    if (!verificationCode) {
+        showAlert('Lütfen doğrulama kodunu girin', 'warning');
+        return;
+    }
+    
+    fetch(`/api/telegram/sessions/${sessionId}/verify`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            verification_code: verificationCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert(data.message, 'success');
+            document.getElementById('verifySessionForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('verifySessionModal')).hide();
+            loadSessions();
+        } else {
+            showAlert(data.error || 'Doğrulama sırasında hata oluştu', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error verifying session:', error);
+        showAlert('Doğrulama sırasında hata oluştu', 'danger');
+    });
+}
+
+function useSession(sessionId) {
+    // Redirect to groups page with selected session
+    window.location.href = `/telegram/groups?session=${sessionId}`;
+}
+
+function deleteSession(sessionId) {
+    if (confirm('Bu oturumu silmek istediğinizden emin misiniz?')) {
+        fetch(`/api/telegram/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert(data.message, 'success');
+                loadSessions();
+            } else {
+                showAlert(data.error || 'Oturum silinirken hata oluştu', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting session:', error);
+            showAlert('Oturum silinirken hata oluştu', 'danger');
+        });
+    }
+}
+
+// Oturum test etme fonksiyonu
+function testSession(sessionId) {
+    const sessionCard = document.querySelector(`[data-session-id="${sessionId}"]`);
+    if (sessionCard) {
+        const testBtn = sessionCard.querySelector('.test-btn');
+        if (testBtn) {
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Test ediliyor...';
+            testBtn.disabled = true;
+        }
+    }
+
+    fetch(`/api/telegram/sessions/${sessionId}/test`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`Oturum testi başarılı: ${data.message}`, 'success');
+            updateSessionStatus(sessionId, 'active');
+        } else {
+            showAlert(`Oturum testi başarısız: ${data.error}`, 'danger');
+            updateSessionStatus(sessionId, 'inactive');
+        }
+    })
+    .catch(error => {
+        console.error('Error testing session:', error);
+        showAlert('Oturum test edilirken hata oluştu', 'danger');
+        updateSessionStatus(sessionId, 'inactive');
+    })
+    .finally(() => {
+        if (sessionCard) {
+            const testBtn = sessionCard.querySelector('.test-btn');
+            if (testBtn) {
+                testBtn.innerHTML = '<i class="fas fa-vial me-1"></i>Test Et';
+                testBtn.disabled = false;
+            }
+        }
+    });
+}
+
+// Oturum durumunu güncelleme
+function updateSessionStatus(sessionId, status) {
+    const sessionIndex = allSessions.findIndex(s => s.id === sessionId);
+    if (sessionIndex !== -1) {
+        allSessions[sessionIndex].status = status;
+        allSessions[sessionIndex].is_active = status === 'active';
+        updateStatistics();
+        displaySessions(filteredSessions);
+    }
+}
+
+// İstatistikleri güncelleme
+function updateStatistics() {
+    const totalSessions = allSessions.length;
+    const activeSessions = allSessions.filter(s => s.is_active).length;
+    const pendingSessions = allSessions.filter(s => s.status === 'pending').length;
+    const usageToday = allSessions.reduce((sum, s) => sum + (s.usage_today || 0), 0);
+
+    document.getElementById('totalSessions').textContent = totalSessions;
+    document.getElementById('activeSessions').textContent = activeSessions;
+    document.getElementById('pendingSessions').textContent = pendingSessions;
+    document.getElementById('usageToday').textContent = usageToday;
+}
+
+// Filtreleme fonksiyonu
+function filterSessions() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    if (!statusFilter) {
+        filteredSessions = [...allSessions];
+    } else {
+        filteredSessions = allSessions.filter(session => {
+            switch (statusFilter) {
+                case 'active':
+                    return session.is_active;
+                case 'pending':
+                    return session.status === 'pending';
+                case 'inactive':
+                    return !session.is_active;
+                default:
+                    return true;
+            }
+        });
+    }
+    
+    displaySessions(filteredSessions);
+}
+
+// Oturumları yenileme
+function refreshSessions() {
+    const refreshBtn = document.querySelector('[onclick="refreshSessions()"]');
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    refreshBtn.disabled = true;
+    
+    loadSessions();
+    
+    setTimeout(() => {
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        refreshBtn.disabled = false;
+        showAlert('Oturumlar yenilendi', 'success');
+    }, 1000);
+}
+
+// Toplu oturum doğrulama
+function verifyAllSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen doğrulanacak oturumları seçin', 'warning');
+        return;
+    }
+
+    showAlert(`${selectedSessions.length} oturum doğrulanıyor...`, 'info');
+    
+    Promise.all(selectedSessions.map(sessionId => 
+        fetch(`/api/telegram/sessions/${sessionId}/verify`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+    ))
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(results => {
+        const successful = results.filter(r => r.success).length;
+        showAlert(`${successful}/${selectedSessions.length} oturum başarıyla doğrulandı`, 'success');
+        loadSessions();
+    })
+    .catch(error => {
+        console.error('Error verifying sessions:', error);
+        showAlert('Toplu doğrulama sırasında hata oluştu', 'danger');
+    });
+}
+
+// Toplu oturum test etme
+function testAllSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen test edilecek oturumları seçin', 'warning');
+        return;
+    }
+
+    showAlert(`${selectedSessions.length} oturum test ediliyor...`, 'info');
+    
+    Promise.all(selectedSessions.map(sessionId => 
+        fetch(`/api/telegram/sessions/${sessionId}/test`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+    ))
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(results => {
+        const successful = results.filter(r => r.success).length;
+        showAlert(`${successful}/${selectedSessions.length} oturum test başarılı`, 'success');
+        loadSessions();
+    })
+    .catch(error => {
+        console.error('Error testing sessions:', error);
+        showAlert('Toplu test sırasında hata oluştu', 'danger');
+    });
+}
+
+// Toplu oturum silme
+function bulkDeleteSessions() {
+    const selectedSessions = getSelectedSessions();
+    if (selectedSessions.length === 0) {
+        showAlert('Lütfen silinecek oturumları seçin', 'warning');
+        return;
+    }
+
+    if (confirm(`${selectedSessions.length} oturum silinecek. Emin misiniz?`)) {
+        showAlert(`${selectedSessions.length} oturum siliniyor...`, 'info');
+        
+        Promise.all(selectedSessions.map(sessionId => 
+            fetch(`/api/telegram/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+        ))
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(results => {
+            const successful = results.filter(r => r.success || r.message).length;
+            showAlert(`${successful}/${selectedSessions.length} oturum başarıyla silindi`, 'success');
+            loadSessions();
+        })
+        .catch(error => {
+            console.error('Error deleting sessions:', error);
+            showAlert('Toplu silme sırasında hata oluştu', 'danger');
+        });
+    }
+}
+
+// Seçili oturumları alma
+function getSelectedSessions() {
+    const checkboxes = document.querySelectorAll('.session-checkbox:checked');
+    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+}
+
+// Tümünü seçme/seçimi kaldırma
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.session-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+// Gelişmiş alert sistemi
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+    
+    const icon = {
+        'success': 'fas fa-check-circle',
+        'danger': 'fas fa-exclamation-triangle',
+        'warning': 'fas fa-exclamation-circle',
+        'info': 'fas fa-info-circle'
+    }[type] || 'fas fa-info-circle';
+    
+    alertDiv.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="${icon} me-2"></i>
+            <div class="flex-grow-1">${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.stat-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.session-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.session-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.session-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.session-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.session-status.inactive {
+    background: #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.session-status.pending {
+    background: #6c757d;
+    box-shadow: 0 0 10px rgba(108, 117, 125, 0.5);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+.form-control, .form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #333;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.glass-card {
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+}
+
+.btn-group .btn {
+    border-radius: 10px;
+    margin: 0 2px;
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.badge {
+    border-radius: 10px;
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+</style>
+{% endblock %}

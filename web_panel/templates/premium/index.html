@@ -1,0 +1,95 @@
+{% extends "premium/base.html" %}
+
+{% block title %}Ana Panel{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-gray-800">Ana Panel</h1>
+
+<div class="row">
+    <!-- Toplam Davet Kartı -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Toplam Davet</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,250</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-send-plus-fill fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Başarılı Davet Kartı -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Başarılı Davet</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,100</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Başarısız Davet Kartı -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Başarısız Davet</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">150</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-x-circle-fill fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kredi/Bakiye Kartı -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Kalan Kredi</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Sınırsız</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-coin fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Son İşlemler</h6>
+            </div>
+            <div class="card-body">
+                <p>Burada son transfer işlemlerinin bir listesi veya bir aktivite grafiği yer alabilir.</p>
+                <p class="mb-0">Bu alan, gelecekteki geliştirmeler için tasarlanmıştır.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

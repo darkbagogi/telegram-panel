@@ -1,0 +1,324 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Reklam Mesajı Gönder - Telegram Panel{% endblock %}
+{% block page_title %}Gruplara Reklam Mesajı Gönder{% endblock %}
+
+{% block top_actions %}
+<button class="tg-btn tg-btn-success" onclick="startPromo()" id="startBtn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+    </svg>
+    Gönderimi Başlat
+</button>
+<button class="tg-btn tg-btn-danger" onclick="stopPromo()" id="stopBtn" style="display: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 6h12v12H6z"/>
+    </svg>
+    Durdur
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="tg-alert tg-alert-warning">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </svg>
+    <div>
+        <strong>⚠️ Önemli Uyarı:</strong> Spam yapmak Telegram hesabınızın yasaklanmasına neden olabilir. Sadece kendi gruplarınıza veya izin aldığınız gruplara mesaj gönderin.
+    </div>
+</div>
+
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+        </svg>
+        Mesaj İçeriği
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Reklam Mesajınız</label>
+        <textarea class="tg-input" id="promoMessage" rows="8" placeholder="Mesajınızı buraya yazın..."></textarea>
+        <small style="color: var(--tg-text-secondary); display: block; margin-top: 5px;">
+            Emoji, link ve formatlamalar kullanabilirsiniz
+        </small>
+    </div>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('🚀')">🚀</button>
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('🎉')">🎉</button>
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('💎')">💎</button>
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('⚡')">⚡</button>
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('🔥')">🔥</button>
+        <button class="tg-btn tg-btn-secondary" onclick="insertEmoji('✨')">✨</button>
+    </div>
+</div>
+
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </svg>
+        Hedef Gruplar
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Grup Listesi (Her satıra bir grup)</label>
+        <textarea class="tg-input" id="targetGroups" rows="6" placeholder="@grup1&#10;@grup2&#10;https://t.me/grup3"></textarea>
+        <small style="color: var(--tg-text-secondary); display: block; margin-top: 5px;">
+            Grup kullanıcı adı (@grupadi) veya link girebilirsiniz
+        </small>
+    </div>
+    
+    <button class="tg-btn tg-btn-secondary" onclick="loadMyGroups()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        Gruplarımı Yükle
+    </button>
+</div>
+
+<div class="tg-card">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+        Gönderim Ayarları
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label class="form-label">Minimum Bekleme (saniye)</label>
+            <input type="number" class="tg-input" value="45" id="minDelay" min="30" max="300">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Maksimum Bekleme (saniye)</label>
+            <input type="number" class="tg-input" value="75" id="maxDelay" min="30" max="300">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Döngü Modu</label>
+            <select class="tg-input" id="loopMode">
+                <option value="once">Bir Kez Gönder</option>
+                <option value="loop">Sürekli Döngü</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="tg-card" id="progressCard" style="display: none;">
+    <div class="tg-card-header">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+        </svg>
+        Gönderim İlerlemesi
+    </div>
+    
+    <div id="progressLog" style="max-height: 400px; overflow-y: auto; background: var(--tg-secondary-bg); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 13px;">
+        <div style="color: var(--tg-text-secondary);">Gönderim başlatılıyor...</div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-top: 20px;">
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-success);" id="sentCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Gönderildi</div>
+        </div>
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-warning);" id="pendingCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Beklemede</div>
+        </div>
+        <div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--tg-danger);" id="failedCount">0</div>
+            <div style="font-size: 12px; color: var(--tg-text-secondary);">Başarısız</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isRunning = false;
+let shouldStop = false;
+
+function insertEmoji(emoji) {
+    const textarea = document.getElementById('promoMessage');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + emoji + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+}
+
+async function loadMyGroups() {
+    showLoading('Gruplarınız yükleniyor...');
+    
+    try {
+        const response = await fetch('/api/v1/get_groups');
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success && data.groups.length > 0) {
+            const groupList = data.groups.map(g => g.username ? `@${g.username}` : g.title).join('\n');
+            document.getElementById('targetGroups').value = groupList;
+            showAlert('success', `${data.groups.length} grup yüklendi`);
+        } else {
+            showAlert('info', 'Grup bulunamadı');
+        }
+    } catch (error) {
+        hideLoading();
+        showAlert('danger', 'Gruplar yüklenirken hata: ' + error.message);
+    }
+}
+
+async function startPromo() {
+    const message = document.getElementById('promoMessage').value.trim();
+    const groupsText = document.getElementById('targetGroups').value.trim();
+    const minDelay = parseInt(document.getElementById('minDelay').value);
+    const maxDelay = parseInt(document.getElementById('maxDelay').value);
+    const loopMode = document.getElementById('loopMode').value;
+    
+    if (!message) {
+        showAlert('danger', 'Lütfen mesaj içeriğini girin');
+        return;
+    }
+    
+    if (!groupsText) {
+        showAlert('danger', 'Lütfen en az bir grup girin');
+        return;
+    }
+    
+    const groups = groupsText.split('\n').filter(g => g.trim());
+    
+    if (!confirm(`${groups.length} gruba mesaj gönderilecek. Devam etmek istiyor musunuz?`)) {
+        return;
+    }
+    
+    isRunning = true;
+    shouldStop = false;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-flex';
+    document.getElementById('progressCard').style.display = 'block';
+    
+    try {
+        const response = await fetch('/api/v1/send_promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                groups: groups,
+                min_delay: minDelay,
+                max_delay: maxDelay,
+                loop_mode: loopMode === 'loop'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', 'Gönderim başlatıldı!');
+            monitorProgress(data.task_id);
+        } else {
+            showAlert('danger', data.error || 'Gönderim başlatılamadı');
+            resetUI();
+        }
+    } catch (error) {
+        showAlert('danger', 'Hata: ' + error.message);
+        resetUI();
+    }
+}
+
+function stopPromo() {
+    if (confirm('Gönderimi durdurmak istediğinizden emin misiniz?')) {
+        shouldStop = true;
+        showAlert('warning', 'Gönderim durduruluyor...');
+        // API'ye stop isteği gönder
+        fetch('/api/v1/stop_promo', { method: 'POST' });
+        resetUI();
+    }
+}
+
+function resetUI() {
+    isRunning = false;
+    document.getElementById('startBtn').style.display = 'inline-flex';
+    document.getElementById('stopBtn').style.display = 'none';
+}
+
+function monitorProgress(taskId) {
+    // Simüle edilmiş ilerleme (gerçek implementasyonda WebSocket kullanılabilir)
+    let sent = 0;
+    const groups = document.getElementById('targetGroups').value.split('\n').filter(g => g.trim());
+    const total = groups.length;
+    
+    const interval = setInterval(() => {
+        if (shouldStop || sent >= total) {
+            clearInterval(interval);
+            resetUI();
+            return;
+        }
+        
+        sent++;
+        updateProgress(sent, total - sent, 0);
+        addLog(`✅ ${groups[sent - 1]} grubuna mesaj gönderildi`);
+        
+        if (sent < total) {
+            const delay = Math.floor(Math.random() * 30) + 45;
+            addLog(`⏳ ${delay} saniye bekleniyor...`);
+        }
+    }, 5000);
+}
+
+function updateProgress(sent, pending, failed) {
+    document.getElementById('sentCount').textContent = sent;
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('failedCount').textContent = failed;
+}
+
+function addLog(message) {
+    const log = document.getElementById('progressLog');
+    const time = new Date().toLocaleTimeString('tr-TR');
+    const entry = document.createElement('div');
+    entry.style.marginBottom = '5px';
+    entry.innerHTML = `<span style="color: var(--tg-text-secondary);">[${time}]</span> ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `tg-alert tg-alert-${type}`;
+    alertDiv.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    
+    const contentArea = document.querySelector('.content-area');
+    contentArea.insertBefore(alertDiv, contentArea.firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+function showLoading(message) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loadingOverlay';
+    loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+    loadingDiv.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+            <div class="loading" style="margin: 0 auto 15px;"></div>
+            <div>${message}</div>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+function hideLoading() {
+    const loadingDiv = document.getElementById('loadingOverlay');
+    if (loadingDiv) loadingDiv.remove();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Telegram Premium Panel - Ana Sayfa{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="card text-center">
+                <div class="card-body p-5">
+                    <h1 class="display-4 mb-4">
+                        <i class="fab fa-telegram-plane text-primary me-3"></i>
+                        Telegram Premium Panel
+                    </h1>
+                    <p class="lead mb-4">
+                        Profesyonel Telegram üye yönetimi ve davet sistemi. 
+                        Güvenli, hızlı ve etkili çözümlerle grubunuzu büyütün.
+                    </p>
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card bg-primary">
+                                <h3><i class="fas fa-users"></i></h3>
+                                <p>Akıllı Üye Daveti</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card bg-success">
+                                <h3><i class="fas fa-shield-alt"></i></h3>
+                                <p>Spam Koruması</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card bg-warning">
+                                <h3><i class="fas fa-chart-line"></i></h3>
+                                <p>Analitik Raporlar</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not current_user.is_authenticated %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-user-plus me-2"></i>Ücretsiz Başla
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard'a Git
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center text-white mb-5">🚀 Premium Özellikler</h2>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Akıllı Davet Sistemi</h5>
+                    <p class="card-text">
+                        Gelişmiş algoritma ile kaliteli üyeleri otomatik olarak filtreler ve davet eder.
+                        Spam koruması ile güvenli davet işlemi.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-rocket fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">Toplu Aktarım</h5>
+                    <p class="card-text">
+                        Binlerce üyeli grupları güvenli limitler dahilinde otomatik olarak aktarın.
+                        3 farklı hız modu ile esnek kullanım.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-pie fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">Detaylı Analitik</h5>
+                    <p class="card-text">
+                        Kampanya performansını takip edin. Başarı oranları, trend analizleri ve 
+                        ROI hesaplamaları ile optimize edin.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Preview -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center text-white mb-5">💎 Abonelik Paketleri</h2>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="subscription-card">
+                <h4>Ücretsiz</h4>
+                <div class="price">₺0<small>/ay</small></div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> 10 günlük davet</li>
+                    <li><i class="fas fa-check"></i> Temel filtreleme</li>
+                    <li><i class="fas fa-check"></i> 7 gün deneme</li>
+                </ul>
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary">Başla</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="subscription-card featured">
+                <div class="badge bg-warning text-dark mb-2">Popüler</div>
+                <h4>Premium</h4>
+                <div class="price">₺299<small>/ay</small></div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> 200 günlük davet</li>
+                    <li><i class="fas fa-check"></i> Toplu aktarım</li>
+                    <li><i class="fas fa-check"></i> Detaylı analitik</li>
+                    <li><i class="fas fa-check"></i> API erişimi</li>
+                </ul>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('subscription') }}" class="btn btn-warning">Yükselt</a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-warning">Başla</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="subscription-card">
+                <h4>Kurumsal</h4>
+                <div class="price">₺999<small>/ay</small></div>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> 1000 günlük davet</li>
+                    <li><i class="fas fa-check"></i> Öncelikli destek</li>
+                    <li><i class="fas fa-check"></i> Özel entegrasyonlar</li>
+                    <li><i class="fas fa-check"></i> Beyaz etiket</li>
+                </ul>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('subscription') }}" class="btn btn-primary">İletişim</a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Başla</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center p-4">
+                    <h5 class="card-title">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        Güvenlik ve Etik Kullanım
+                    </h5>
+                    <p class="card-text mb-0">
+                        Sistemimiz Telegram'ın kurallarına uygun olarak tasarlanmıştır. 
+                        Spam koruması, rate limiting ve etik kullanım politikaları ile 
+                        hesabınızın güvenliğini sağlıyoruz.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

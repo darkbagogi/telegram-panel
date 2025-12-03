@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Abonelik Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-crown mr-2"></i>
+                        Abonelik Yönetimi
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Mevcut Plan Bilgisi -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-user-crown"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Mevcut Planınız</span>
+                                    <span class="info-box-number">{{ current_user.subscription_type|title }}</span>
+                                    <div class="progress">
+                                        <div class="progress-bar" data-width="{{ (subscription_info.days_left / 30 * 100)|round }}"></div>
+                                    </div>
+                                    <span class="progress-description">
+                                        {{ subscription_info.days_left }} gün kaldı
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Günlük Limit</span>
+                                    <span class="info-box-number">{{ subscription_info.daily_limit }}</span>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" data-width="{{ (subscription_info.used_today / subscription_info.daily_limit * 100)|round }}"></div>
+                                    </div>
+                                    <span class="progress-description">
+                                        {{ subscription_info.used_today }}/{{ subscription_info.daily_limit }} kullanıldı
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Abonelik Planları -->
+                    <div class="row">
+                        {% for plan_name, plan_info in subscription_plans.items() %}
+                        <div class="col-md-3">
+                            <div class="card {% if current_user.subscription_type == plan_name %}border-primary{% endif %}">
+                                <div class="card-header text-center {% if current_user.subscription_type == plan_name %}bg-primary text-white{% endif %}">
+                                    <h4>{{ plan_info.display_name }}</h4>
+                                    <h2>${{ plan_info.price }}<small>/ay</small></h2>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> {{ plan_info.daily_limit }} günlük davet</li>
+                                        <li><i class="fas fa-check text-success"></i> {{ plan_info.max_campaigns }} kampanya</li>
+                                        {% if plan_info.api_access %}
+                                        <li><i class="fas fa-check text-success"></i> API Erişimi</li>
+                                        {% else %}
+                                        <li><i class="fas fa-times text-muted"></i> API Erişimi</li>
+                                        {% endif %}
+                                        {% if plan_info.priority_support %}
+                                        <li><i class="fas fa-check text-success"></i> Öncelikli Destek</li>
+                                        {% else %}
+                                        <li><i class="fas fa-times text-muted"></i> Öncelikli Destek</li>
+                                        {% endif %}
+                                        {% if plan_info.advanced_analytics %}
+                                        <li><i class="fas fa-check text-success"></i> Gelişmiş Analitik</li>
+                                        {% else %}
+                                        <li><i class="fas fa-times text-muted"></i> Gelişmiş Analitik</li>
+                                        {% endif %}
+                                        {% if plan_info.bulk_operations %}
+                                        <li><i class="fas fa-check text-success"></i> Toplu İşlemler</li>
+                                        {% else %}
+                                        <li><i class="fas fa-times text-muted"></i> Toplu İşlemler</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                <div class="card-footer text-center">
+                                    {% if current_user.subscription_type == plan_name %}
+                                    <button class="btn btn-primary btn-block" disabled>
+                                        <i class="fas fa-check"></i> Mevcut Plan
+                                    </button>
+                                    {% elif plan_info.price == 0 %}
+                                    <button class="btn btn-outline-secondary btn-block" data-action="downgrade" data-plan="{{ plan_name }}">
+                                        <i class="fas fa-arrow-down"></i> Düşür
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-primary btn-block" data-action="upgrade" data-plan="{{ plan_name }}" data-price="{{ plan_info.price }}">
+                                        <i class="fas fa-arrow-up"></i> Yükselt
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Ödeme Geçmişi -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-credit-card mr-2"></i>
+                                        Ödeme Geçmişi
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tarih</th>
+                                                    <th>Plan</th>
+                                                    <th>Tutar</th>
+                                                    <th>Durum</th>
+                                                    <th>İşlem ID</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">
+                                                        Henüz ödeme geçmişi bulunmuyor
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div class="modal fade" id="upgradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Plan Yükseltme</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Planınızı yükseltmek istediğinizden emin misiniz?</p>
+                <div id="upgradeDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="confirmUpgrade">Onayla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+
+let selectedPlan = '';
+let selectedPrice = 0;
+
+function upgradePlan(planName, price) {
+    selectedPlan = planName;
+    selectedPrice = price || 0;
+    $('#upgradeDetails').html(`<strong>${planName}</strong> planına yükseltilecek.`);
+    $('#upgradeModal').modal('show');
+}
+
+function downgradePlan(planName) {
+    if (confirm(`${planName} planına düşürmek istediğinizden emin misiniz?`)) {
+        $.post('/api/subscription/downgrade', {
+            plan: planName
+        }).done(function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert('Hata: ' + response.message);
+            }
+        });
+    }
+}
+
+// Handle button clicks with data attributes
+$(document).on('click', '[data-action="upgrade"]', function() {
+    const planName = $(this).data('plan');
+    const price = $(this).data('price');
+    upgradePlan(planName, price);
+});
+
+$(document).on('click', '[data-action="downgrade"]', function() {
+    const planName = $(this).data('plan');
+    downgradePlan(planName);
+});
+
+$('#confirmUpgrade').click(function() {
+    $.post('/api/subscription/upgrade', {
+        plan: selectedPlan
+    }).done(function(response) {
+        if (response.success) {
+            $('#upgradeModal').modal('hide');
+            location.reload();
+        } else {
+            alert('Hata: ' + response.message);
+        }
+    });
+});
+</script>
+{% endblock %}

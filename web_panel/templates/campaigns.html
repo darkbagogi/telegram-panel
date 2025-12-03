@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}Kampanyalar - Telegram Premium Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-bullhorn me-2"></i>Kampanyalar
+            </h2>
+            <p class="text-muted">Tüm davet kampanyalarınızı yönetin ve takip edin</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('create_campaign') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Yeni Kampanya
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Durum</label>
+                            <select name="status" class="form-select">
+                                <option value="">Tümü</option>
+                                <option value="pending" {{ 'selected' if request.args.get('status') == 'pending' }}>Beklemede</option>
+                                <option value="running" {{ 'selected' if request.args.get('status') == 'running' }}>Çalışıyor</option>
+                                <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Tamamlandı</option>
+                                <option value="failed" {{ 'selected' if request.args.get('status') == 'failed' }}>Başarısız</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tarih Aralığı</label>
+                            <select name="date_range" class="form-select">
+                                <option value="">Tümü</option>
+                                <option value="today" {{ 'selected' if request.args.get('date_range') == 'today' }}>Bugün</option>
+                                <option value="week" {{ 'selected' if request.args.get('date_range') == 'week' }}>Bu Hafta</option>
+                                <option value="month" {{ 'selected' if request.args.get('date_range') == 'month' }}>Bu Ay</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Arama</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Kampanya adı veya grup adı..." 
+                                   value="{{ request.args.get('search', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns List -->
+    <div class="row">
+        <div class="col-12">
+            {% if campaigns %}
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Kampanya</th>
+                                    <th>Kaynak → Hedef</th>
+                                    <th>Durum</th>
+                                    <th>İlerleme</th>
+                                    <th>Başarı Oranı</th>
+                                    <th>Tarih</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in campaigns %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ campaign.name }}</strong>
+                                            {% if campaign.description %}
+                                            <br>
+                                            <small class="text-muted">{{ campaign.description[:50] }}{% if campaign.description|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark me-2">{{ campaign.source_group }}</span>
+                                            <i class="fas fa-arrow-right text-muted me-2"></i>
+                                            <span class="badge bg-light text-dark">{{ campaign.target_group }}</span>
+                                        </div>
+                                    </td>
+123                                    <td>
+                                        {% if campaign.status == 'completed' %}
+                                            <span class="badge bg-success">
+                                        {% elif campaign.status == 'running' %}
+                                            <span class="badge bg-primary">
+                                        {% elif campaign.status == 'pending' %}
+                                            <span class="badge bg-warning">
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                        {% endif %}
+                                            {% if campaign.status == 'pending' %}Beklemede
+                                            {% elif campaign.status == 'running' %}Çalışıyor
+                                            {% elif campaign.status == 'completed' %}Tamamlandı
+                                            {% elif campaign.status == 'failed' %}Başarısız
+                                            {% else %}{{ campaign.status.title() }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if campaign.total_members > 0 %}
+                                            {% set progress = (campaign.invited_members / campaign.total_members * 100) %}
+                                            <div class="progress mb-1" style="height: 8px;">
+                                                <div class="progress-bar" 
+                                                     data-progress="{{ progress }}"
+                                                     data-success="{{ 'true' if progress == 100 else 'false' }}"></div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ campaign.invited_members }}/{{ campaign.total_members }} 
+                                                ({{ "%.1f"|format(progress) }}%)
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">Hazırlanıyor...</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.invited_members > 0 %}
+                                            {% set success_rate = (campaign.successful_invites / campaign.invited_members * 100) %}
+                                            {% if success_rate >= 80 %}
+                                                <span class="badge bg-success">
+                                            {% elif success_rate >= 60 %}
+                                                <span class="badge bg-warning">
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                            {% endif %}
+                                                {{ "%.1f"|format(success_rate) }}%
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">{{ campaign.successful_invites }}/{{ campaign.invited_members }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ campaign.created_at.strftime('%d.%m.%Y') }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ campaign.created_at.strftime('%H:%M') }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-action="view" data-campaign-id="{{ campaign.id }}"
+                                                    title="Detayları Görüntüle">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if campaign.status == 'running' %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    data-action="pause" data-campaign-id="{{ campaign.id }}"
+                                                    title="Duraklat">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                            {% elif campaign.status == 'pending' %}
+                                            <button type="button" class="btn btn-sm btn-outline-success" 
+                                                    data-action="start" data-campaign-id="{{ campaign.id }}"
+                                                    title="Başlat">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% if campaign.status in ['completed', 'failed'] %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-action="delete" data-campaign-id="{{ campaign.id }}"
+                                                    title="Sil">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if campaigns.pages > 1 %}
+            <nav aria-label="Kampanya sayfaları" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if campaigns.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('campaigns', page=campaigns.prev_num, **request.args) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in campaigns.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != campaigns.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('campaigns', page=page_num, **request.args) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if campaigns.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('campaigns', page=campaigns.next_num, **request.args) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-bullhorn fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">Henüz kampanya bulunamadı</h4>
+                    <p class="text-muted mb-4">
+                        {% if request.args.get('search') or request.args.get('status') or request.args.get('date_range') %}
+                            Arama kriterlerinize uygun kampanya bulunamadı. Filtreleri temizleyip tekrar deneyin.
+                        {% else %}
+                            İlk kampanyanızı oluşturarak Telegram üye davet işlemlerinizi başlatın.
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        {% if request.args.get('search') or request.args.get('status') or request.args.get('date_range') %}
+                        <a href="{{ url_for('campaigns') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Filtreleri Temizle
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('create_campaign') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>İlk Kampanyanızı Oluşturun
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Detail Modal -->
+<div class="modal fade" id="campaignDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kampanya Detayları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="campaignDetailContent">
+                <!-- Content will be loaded via AJAX -->
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set progress bar styles
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-progress]');
+    progressBars.forEach(bar => {
+        const progress = parseFloat(bar.getAttribute('data-progress'));
+        const isSuccess = bar.getAttribute('data-success') === 'true';
+        bar.style.width = progress + '%';
+        bar.classList.add(isSuccess ? 'bg-success' : 'bg-primary');
+    });
+    
+    // Add event listeners for campaign action buttons
+    document.querySelectorAll('button[data-action]').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            const campaignId = this.getAttribute('data-campaign-id');
+            
+            switch(action) {
+                case 'view':
+                    viewCampaign(campaignId);
+                    break;
+                case 'start':
+                    startCampaign(campaignId);
+                    break;
+                case 'pause':
+                    pauseCampaign(campaignId);
+                    break;
+                case 'delete':
+                    deleteCampaign(campaignId);
+                    break;
+            }
+        });
+    });
+});
+
+function viewCampaign(campaignId) {
+    const modal = new bootstrap.Modal(document.getElementById('campaignDetailModal'));
+    const content = document.getElementById('campaignDetailContent');
+    
+    // Show loading
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Load campaign details
+    fetch(`/api/campaigns/${campaignId}`)
+        .then(response => response.json())
+        .then(data => {
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Genel Bilgiler</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Kampanya Adı:</strong></td><td>${data.name}</td></tr>
+                            <tr><td><strong>Açıklama:</strong></td><td>${data.description || 'Yok'}</td></tr>
+                            <tr><td><strong>Durum:</strong></td><td><span class="badge bg-primary">${data.status}</span></td></tr>
+                            <tr><td><strong>Oluşturulma:</strong></td><td>${new Date(data.created_at).toLocaleString('tr-TR')}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>İstatistikler</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Toplam Üye:</strong></td><td>${data.total_members}</td></tr>
+                            <tr><td><strong>Davet Edilen:</strong></td><td>${data.invited_members}</td></tr>
+                            <tr><td><strong>Başarılı:</strong></td><td>${data.successful_invites}</td></tr>
+                            <tr><td><strong>Başarı Oranı:</strong></td><td>${data.invited_members > 0 ? ((data.successful_invites / data.invited_members) * 100).toFixed(1) : 0}%</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>İlerleme</h6>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" style="width: ${data.total_members > 0 ? (data.invited_members / data.total_members * 100) : 0}%"></div>
+                        </div>
+                        <small class="text-muted">${data.invited_members}/${data.total_members} üye işlendi</small>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Kampanya detayları yüklenirken hata oluştu.
+                </div>
+            `;
+        });
+}
+
+function startCampaign(campaignId) {
+    if (confirm('Bu kampanyayı başlatmak istediğinizden emin misiniz?')) {
+        fetch(`/api/campaigns/${campaignId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Kampanya başlatılırken hata oluştu: ' + data.message);
+            }
+        });
+    }
+}
+
+function pauseCampaign(campaignId) {
+    if (confirm('Bu kampanyayı duraklatmak istediğinizden emin misiniz?')) {
+        fetch(`/api/campaigns/${campaignId}/pause`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Kampanya duraklatılırken hata oluştu: ' + data.message);
+            }
+        });
+    }
+}
+
+function deleteCampaign(campaignId) {
+    if (confirm('Bu kampanyayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        fetch(`/api/campaigns/${campaignId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Kampanya silinirken hata oluştu: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

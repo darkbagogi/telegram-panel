@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}API Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-code mr-2"></i>
+                        API Yönetimi
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- API Key Bilgisi -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="apiKey">API Anahtarınız</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="apiKey" value="{{ current_user.api_key }}" readonly>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                                            <i class="fas fa-copy"></i> Kopyala
+                                        </button>
+                                        <button class="btn btn-warning" type="button" onclick="regenerateApiKey()">
+                                            <i class="fas fa-sync"></i> Yenile
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Bu anahtarı güvenli tutun ve kimseyle paylaşmayın.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-chart-bar"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">API Kullanımı</span>
+                                    <span class="info-box-number">0</span>
+                                    <span class="progress-description">Bu ay</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Dokümantasyonu -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title">
+                                        <i class="fas fa-book mr-2"></i>
+                                        API Dokümantasyonu
+                                    </h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="accordion" id="apiDocs">
+                                        <!-- Kimlik Doğrulama -->
+                                        <div class="card">
+                                            <div class="card-header" id="authHeader">
+                                                <h5 class="mb-0">
+                                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#authCollapse">
+                                                        Kimlik Doğrulama
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="authCollapse" class="collapse show" data-parent="#apiDocs">
+                                                <div class="card-body">
+                                                    <p>Tüm API isteklerinde <code>Authorization</code> header'ında API anahtarınızı gönderin:</p>
+                                                    <pre><code>Authorization: Bearer {{ current_user.api_key }}</code></pre>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Kampanya Oluşturma -->
+                                        <div class="card">
+                                            <div class="card-header" id="campaignHeader">
+                                                <h5 class="mb-0">
+                                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#campaignCollapse">
+                                                        Kampanya Oluşturma
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="campaignCollapse" class="collapse" data-parent="#apiDocs">
+                                                <div class="card-body">
+                                                    <h6>POST /api/campaigns</h6>
+                                                    <p>Yeni bir kampanya oluşturur.</p>
+                                                    <h6>Request Body:</h6>
+                                                    <pre><code>{
+  "name": "Kampanya Adı",
+  "source_group": "Kaynak Grup ID",
+  "target_group": "Hedef Grup ID",
+  "daily_limit": 50,
+  "filter_type": "active"
+}</code></pre>
+                                                    <h6>Response:</h6>
+                                                    <pre><code>{
+  "success": true,
+  "campaign_id": 123,
+  "message": "Kampanya başarıyla oluşturuldu"
+}</code></pre>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Kampanya Listesi -->
+                                        <div class="card">
+                                            <div class="card-header" id="listHeader">
+                                                <h5 class="mb-0">
+                                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#listCollapse">
+                                                        Kampanya Listesi
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="listCollapse" class="collapse" data-parent="#apiDocs">
+                                                <div class="card-body">
+                                                    <h6>GET /api/campaigns</h6>
+                                                    <p>Tüm kampanyalarınızı listeler.</p>
+                                                    <h6>Response:</h6>
+                                                    <pre><code>{
+  "campaigns": [
+    {
+      "id": 123,
+      "name": "Kampanya Adı",
+      "status": "running",
+      "progress": 45.5,
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}</code></pre>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- İstatistikler -->
+                                        <div class="card">
+                                            <div class="card-header" id="statsHeader">
+                                                <h5 class="mb-0">
+                                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#statsCollapse">
+                                                        İstatistikler
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="statsCollapse" class="collapse" data-parent="#apiDocs">
+                                                <div class="card-body">
+                                                    <h6>GET /api/stats</h6>
+                                                    <p>Hesap istatistiklerinizi getirir.</p>
+                                                    <h6>Response:</h6>
+                                                    <pre><code>{
+  "total_invites": 1250,
+  "successful_invites": 980,
+  "success_rate": 78.4,
+  "active_campaigns": 3
+}</code></pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Logları -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title">
+                                        <i class="fas fa-list mr-2"></i>
+                                        Son API İstekleri
+                                    </h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tarih</th>
+                                                    <th>Endpoint</th>
+                                                    <th>Method</th>
+                                                    <th>Status</th>
+                                                    <th>Response Time</th>
+                                                    <th>IP</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">
+                                                        Henüz API isteği bulunmuyor
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyApiKey() {
+    const apiKeyInput = document.getElementById('apiKey');
+    apiKeyInput.select();
+    document.execCommand('copy');
+    
+    // Toast notification
+    toastr.success('API anahtarı kopyalandı!');
+}
+
+function regenerateApiKey() {
+    if (confirm('API anahtarınızı yenilemek istediğinizden emin misiniz? Eski anahtar geçersiz hale gelecek.')) {
+        $.post('/api/regenerate_key')
+            .done(function(response) {
+                if (response.success) {
+                    $('#apiKey').val(response.api_key);
+                    toastr.success('API anahtarı başarıyla yenilendi!');
+                } else {
+                    toastr.error('Hata: ' + response.message);
+                }
+            })
+            .fail(function() {
+                toastr.error('API anahtarı yenilenirken bir hata oluştu.');
+            });
+    }
+}
+</script>
+{% endblock %}

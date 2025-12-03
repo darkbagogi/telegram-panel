@@ -1,0 +1,191 @@
+{% extends "telegram_base.html" %}
+
+{% block title %}Sahte Hesap Raporlama{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-flag"></i> Sahte Hesap Raporlama
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Tekli Raporlama</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Kullanıcı Adı</label>
+                                <input type="text" class="form-control" id="singleUsername" 
+                                       placeholder="@username">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Rapor Nedeni</label>
+                                <select class="form-select" id="singleReason">
+                                    <option value="spam">Spam</option>
+                                    <option value="fake">Sahte Hesap</option>
+                                    <option value="violence">Şiddet</option>
+                                    <option value="pornography">Pornografi</option>
+                                </select>
+                            </div>
+                            
+                            <button class="btn btn-danger" id="reportBtn">
+                                <i class="fas fa-flag"></i> Raporla
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Toplu Raporlama</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Kullanıcı Adları (Her satıra bir tane)</label>
+                                <textarea class="form-control" id="bulkUsernames" rows="5" 
+                                          placeholder="@user1&#10;@user2&#10;@user3"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Rapor Nedeni</label>
+                                <select class="form-select" id="bulkReason">
+                                    <option value="spam">Spam</option>
+                                    <option value="fake">Sahte Hesap</option>
+                                    <option value="violence">Şiddet</option>
+                                    <option value="pornography">Pornografi</option>
+                                </select>
+                            </div>
+                            
+                            <button class="btn btn-danger" id="bulkReportBtn">
+                                <i class="fas fa-flag"></i> Toplu Raporla
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div id="resultArea" class="d-none">
+                        <h5>Sonuçlar</h5>
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('reportBtn').addEventListener('click', async function() {
+    const username = document.getElementById('singleUsername').value.trim();
+    const reason = document.getElementById('singleReason').value;
+    const btn = this;
+    
+    if (!username) {
+        alert('Lütfen kullanıcı adı girin');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Raporlanıyor...';
+    
+    try {
+        const response = await fetch('/api/v1/report_fake', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, reason})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('resultContent').innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> ${username} başarıyla raporlandı!
+                </div>
+            `;
+        } else {
+            document.getElementById('resultContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i> Hata: ${data.error}
+                </div>
+            `;
+        }
+        document.getElementById('resultArea').classList.remove('d-none');
+    } catch (error) {
+        alert('Hata: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flag"></i> Raporla';
+    }
+});
+
+document.getElementById('bulkReportBtn').addEventListener('click', async function() {
+    const text = document.getElementById('bulkUsernames').value.trim();
+    const reason = document.getElementById('bulkReason').value;
+    const btn = this;
+    
+    if (!text) {
+        alert('Lütfen kullanıcı adları girin');
+        return;
+    }
+    
+    const usernames = text.split('\n').map(u => u.trim()).filter(u => u);
+    
+    if (usernames.length === 0) {
+        alert('Geçerli kullanıcı adı bulunamadı');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Raporlanıyor...';
+    
+    try {
+        const response = await fetch('/api/v1/bulk_report_fake', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({usernames, reason})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            let html = `
+                <div class="alert alert-info">
+                    <strong>Toplam:</strong> ${data.total}<br>
+                    <strong>Başarılı:</strong> ${data.success_count}<br>
+                    <strong>Başarısız:</strong> ${data.failed_count}
+                </div>
+                <table class="table table-sm">
+                    <thead><tr><th>Kullanıcı</th><th>Durum</th></tr></thead>
+                    <tbody>
+            `;
+            
+            data.results.forEach(r => {
+                const badge = r.success ? 'success' : 'danger';
+                const icon = r.success ? 'check' : 'times';
+                html += `
+                    <tr>
+                        <td>${r.username}</td>
+                        <td><span class="badge bg-${badge}"><i class="fas fa-${icon}"></i> ${r.message}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('resultContent').innerHTML = html;
+        } else {
+            document.getElementById('resultContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i> Hata: ${data.error}
+                </div>
+            `;
+        }
+        document.getElementById('resultArea').classList.remove('d-none');
+    } catch (error) {
+        alert('Hata: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flag"></i> Toplu Raporla';
+    }
+});
+</script>
+{% endblock %}
