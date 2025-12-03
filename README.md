@@ -209,4 +209,4 @@ Sorularınız için issue açabilir veya güvenlik açıkları için özel mesaj
 
 ---
 
-**Hatırlatma:** Bu araç sadece etik ve yasal amaçlar için kullanılmalıdır. Kötüye kullanım durumunda sorumluluk kullanıcıya aittir.
+**Hatırlatma:** Bu araç sadece etik ve yasal amaçlar için kullanılmalıdır. Kötüye kullanım durumunda sorumluluk kullanıcıya aittir.# telegram-panel
