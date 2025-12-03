@@ -202,7 +202,24 @@ def logout():
 
 @app.route('/')
 def home():
-    return redirect(url_for('premium_dashboard'))
+    """Ana sayfa - test için basit response"""
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('premium_dashboard'))
+        else:
+            return redirect(url_for('login'))
+    except:
+        # Database hatası varsa basit sayfa göster
+        return '''
+        <html>
+        <head><title>Telegram Panel</title></head>
+        <body style="font-family: Arial; padding: 50px; text-align: center;">
+            <h1>🚀 Telegram Panel</h1>
+            <p>Panel başlatılıyor...</p>
+            <p><a href="/login">Login</a> | <a href="/health">Health Check</a></p>
+        </body>
+        </html>
+        '''
 
 @app.route('/premium')
 @login_required
@@ -795,13 +812,17 @@ def api_status():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-        if not User.query.filter_by(username='admin').first():
-            admin_user = User(username='admin', email='admin@example.com', subscription_type='enterprise')
-            admin_user.set_password('admin123')
-            db.session.add(admin_user)
-            db.session.commit()
-            print("✅ Admin kullanıcısı oluşturuldu (admin/admin123)")
+        try:
+            db.create_all()
+            if not User.query.filter_by(username='admin').first():
+                admin_user = User(username='admin', email='admin@example.com', subscription_type='enterprise')
+                admin_user.set_password('admin123')
+                db.session.add(admin_user)
+                db.session.commit()
+                print("✅ Admin kullanıcısı oluşturuldu (admin/admin123)")
+        except Exception as e:
+            print(f"⚠️ Database initialization hatası: {e}")
+            print("Panel çalışacak ama login gerekebilir")
     
     # Telegram client'ı başlat (opsiyonel)
     if TELEGRAM_AVAILABLE:
