@@ -194,7 +194,8 @@ class SmartInviter:
         except Exception as e:
             self.stats['failed_invites'] += 1
             error_msg = f"{type(e).__name__}: {str(e)}"
-            result = InviteResult(user_id, username, False, "unknown_error"
+            result = InviteResult(user_id, username, False, "unknown_error", error_msg)
+            self.logger.error(f"Bilinmeyen hata: {username} - {error_msg}")
             return result
     
     def filter_suitable_users(self, users: List, criteria: Dict = None) -> List:
