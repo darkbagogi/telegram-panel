@@ -69,10 +69,12 @@ except ImportError as e:
 
 # Flask uygulaması oluştur
 app = Flask(__name__)
-app.config['SECRET_KEY'] = secrets.token_hex(32)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///premium_panel.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+# Render için /tmp klasörünü kullan (yazılabilir)
+db_path = os.getenv('DATABASE_URL', 'sqlite:////tmp/premium_panel.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-string')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
