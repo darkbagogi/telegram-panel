@@ -83,6 +83,37 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Bu sayfaya erişmek için giriş yapmalısınız.'
+
+# Error handlers
+@app.errorhandler(500)
+def internal_error(error):
+    """500 hatası için detaylı bilgi"""
+    import traceback
+    error_text = traceback.format_exc()
+    return f'''
+    <html>
+    <head><title>Error 500</title></head>
+    <body style="font-family: monospace; padding: 20px;">
+        <h1>Internal Server Error</h1>
+        <pre>{error_text}</pre>
+        <hr>
+        <p><a href="/">Ana Sayfa</a> | <a href="/health">Health Check</a></p>
+    </body>
+    </html>
+    ''', 500
+
+@app.errorhandler(404)
+def not_found(error):
+    """404 hatası"""
+    return '''
+    <html>
+    <head><title>404 Not Found</title></head>
+    <body style="font-family: Arial; padding: 50px; text-align: center;">
+        <h1>404 - Sayfa Bulunamadı</h1>
+        <p><a href="/">Ana Sayfa</a></p>
+    </body>
+    </html>
+    ''', 404
 jwt = JWTManager(app)
 
 limiter = Limiter(
